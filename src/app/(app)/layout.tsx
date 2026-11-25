@@ -7,11 +7,14 @@ import { UserMenu } from "@/components/layout/user-menu";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { requireUser } from "@/server/auth-guard";
 import { db } from "@/lib/db";
+import { getSettings } from "@/server/services/settings";
+import { FormatProvider } from "@/components/shared/format-provider";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
-  const [store, unread] = await Promise.all([
+  const [store, settings, unread] = await Promise.all([
     cookies(),
+    getSettings(),
     db.notification.count({ where: { userId: user.id, readAt: null, dismissedAt: null } }),
   ]);
   const defaultOpen = store.get("sidebar_state")?.value !== "false";
@@ -19,7 +22,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar isAdmin={user.role === "ADMIN"} unread={unread} />
-      <SidebarInset>
+      <SidebarInset className="min-w-0">
         <header className="no-print sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/85 px-4 backdrop-blur">
           <SidebarTrigger className="-ms-1" />
           <div className="flex-1" />
@@ -28,7 +31,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <NotificationBell unread={unread} />
           <UserMenu name={user.name ?? ""} email={user.email ?? ""} role={user.role} />
         </header>
-        <main className="flex-1 p-4 md:p-6">{children}</main>
+        <main className="flex-1 p-4 md:p-6">
+          <FormatProvider digits={settings.arabicDigits} currency={settings.defaultCurrency}>
+            {children}
+          </FormatProvider>
+        </main>
       </SidebarInset>
     </SidebarProvider>
   );

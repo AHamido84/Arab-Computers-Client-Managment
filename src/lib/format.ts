@@ -27,7 +27,7 @@ export function formatMoney(v: Num, currency: string, locale: AppLocale, digits?
     return new Intl.NumberFormat(intlLocale(locale, digits), {
       style: "currency",
       currency,
-      currencyDisplay: locale === "ar" ? "name" : "code",
+      currencyDisplay: locale === "ar" ? "symbol" : "code",
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(toNum(v));
