@@ -1,0 +1,593 @@
+// =============================================================================
+// Arab Computers — Client Management & Maintenance Contracts
+// Prisma schema (PostgreSQL / Neon)
+//
+// Conventions
+//  - Money is stored as Decimal(14,2). Convert with Number() only at the UI edge.
+//  - Bilingual labels are stored as *_ar / *_en pairs.
+//  - Every mutable business entity has createdAt/updatedAt; mutations are also
+//    recorded in AuditLog (see src/server/services/audit.ts).
+// =============================================================================
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ----------------------------------------------------------------------------
+// Users & auth
+// ----------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  ACCOUNT_MANAGER
+  VIEWER
+}
+
+enum Locale {
+  ar
+  en
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(VIEWER)
+  locale       Locale   @default(ar)
+  active       Boolean  @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  managedClients    Client[]        @relation("ClientManager")
+  assignedRequests  ClientRequest[] @relation("RequestAssignee")
+  notifications     Notification[]
+  emailsSent        EmailLog[]
+  activities        Activity[]
+  auditLogs         AuditLog[]
+  attachments       Attachment[]
+  passwordResets    PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------------------------------
+// Settings (singleton row, id = "default")
+// ----------------------------------------------------------------------------
+
+enum EmailProvider {
+  RESEND
+  SMTP
+}
+
+enum DigitStyle {
+  LATIN
+  ARABIC_INDIC
+}
+
+model Settings {
+  id                 String        @id @default("default")
+  companyNameAr      String
+  companyNameEn      String
+  addressAr          String?
+  addressEn          String?
+  phone              String?
+  email              String?
+  website            String?
+  taxNumber          String?
+  commercialRegister String?
+  logoUrl            String?       // Vercel Blob URL; falls back to /brand/logo.png
+  letterheadFooterAr String?
+  letterheadFooterEn String?
+
+  defaultCurrency    String        @default("EGP")
+  vatPercent         Decimal       @default(14) @db.Decimal(5, 2)
+  defaultAmcPercent  Decimal       @default(10) @db.Decimal(5, 2)
+  defaultAmcYears    Int           @default(5)
+  quotationValidityDays Int        @default(30)
+  arabicDigits       DigitStyle    @default(LATIN)
+
+  // Days-before-due offsets for reminders. 0 = on due date; overdue handled separately.
+  notifyIntervals    Int[]         @default([30, 14, 3])
+  notifyOverdueEveryDays Int       @default(7)  // repeat overdue alerts every N days
+  notifyByEmail      Boolean       @default(true)
+
+  emailProvider      EmailProvider @default(RESEND)
+  emailFrom          String?
+  emailReplyTo       String?
+
+  // Numbering formats. Tokens: {YYYY} {YY} {MM} {0000} (zero-padded counter width)
+  contractNumberFormat  String     @default("CT-{YYYY}-{0000}")
+  requestNumberFormat   String     @default("RQ-{YYYY}-{0000}")
+  quotationNumberFormat String     @default("Q-{YYYY}-{0000}")
+  clientCodeFormat      String     @default("CL-{0000}")
+
+  updatedAt          DateTime      @updatedAt
+}
+
+/// Gap-safe counters for document numbering. scope = e.g. "contract:2026".
+model Counter {
+  scope String @id
+  value Int    @default(0)
+}
+
+// ----------------------------------------------------------------------------
+// Editable lookup lists (client statuses, industries, products, request types…)
+// ----------------------------------------------------------------------------
+
+enum LookupKind {
+  CLIENT_STATUS
+  INDUSTRY
+  PRODUCT
+  REQUEST_TYPE
+  PAYMENT_TERM
+}
+
+model LookupValue {
+  id        String     @id @default(cuid())
+  kind      LookupKind
+  key       String     // stable machine key, e.g. "ACTIVE"
+  labelAr   String
+  labelEn   String
+  color     String?    // tailwind-ish token or hex used for badges
+  sortOrder Int        @default(0)
+  active    Boolean    @default(true)
+  isSystem  Boolean    @default(false) // system values cannot be deleted
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  clientsByStatus   Client[]          @relation("ClientStatus")
+  clientsByIndustry Client[]          @relation("ClientIndustry")
+  contractProducts  ContractProduct[]
+  requestsByType    ClientRequest[]   @relation("RequestType")
+
+  @@unique([kind, key])
+  @@index([kind, sortOrder])
+}
+
+// ----------------------------------------------------------------------------
+// Clients
+// ----------------------------------------------------------------------------
+
+model Client {
+  id               String   @id @default(cuid())
+  code             String   @unique
+  nameAr           String
+  nameEn           String
+  statusId         String
+  industryId       String?
+  preferredLang    Locale   @default(ar)
+  address          String?
+  city             String?
+  website          String?
+  taxNumber        String?
+  notes            String?
+  accountManagerId String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  status         LookupValue     @relation("ClientStatus", fields: [statusId], references: [id])
+  industry       LookupValue?    @relation("ClientIndustry", fields: [industryId], references: [id])
+  accountManager User?           @relation("ClientManager", fields: [accountManagerId], references: [id], onDelete: SetNull)
+  contacts       ContactPerson[]
+  contracts      Contract[]
+  requests       ClientRequest[]
+  quotations     Quotation[]
+  emails         EmailLog[]
+  activities     Activity[]
+
+  @@index([statusId])
+  @@index([accountManagerId])
+}
+
+model ContactPerson {
+  id        String   @id @default(cuid())
+  clientId  String
+  name      String
+  jobTitle  String?
+  phone     String?
+  whatsapp  String?
+  email     String?
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+}
+
+/// Polymorphic attachment (client, contract, request, quotation, email).
+enum AttachmentEntity {
+  CLIENT
+  CONTRACT
+  REQUEST
+  QUOTATION
+  EMAIL
+}
+
+model Attachment {
+  id           String           @id @default(cuid())
+  entityType   AttachmentEntity
+  entityId     String
+  url          String           // Vercel Blob URL (private) or pathname
+  pathname     String
+  filename     String
+  contentType  String
+  size         Int
+  label        String?          // e.g. "Signed contract"
+  uploadedById String?
+  createdAt    DateTime         @default(now())
+
+  uploadedBy User? @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+}
+
+// ----------------------------------------------------------------------------
+// Contracts & AMC
+// ----------------------------------------------------------------------------
+
+enum ContractStatus {
+  DRAFT
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum AmcMethod {
+  COMPOUND // each year increases on the previous year's amount
+  SIMPLE   // each year's increase is computed on the base AMC
+}
+
+enum AmcLineStatus {
+  PENDING
+  PAID
+  OVERDUE
+}
+
+model Contract {
+  id           String         @id @default(cuid())
+  number       String         @unique
+  clientId     String
+  title        String?
+  contractDate DateTime       @db.Date
+  startDate    DateTime       @db.Date
+  endDate      DateTime?      @db.Date
+  value        Decimal        @db.Decimal(14, 2)
+  currency     String         @default("EGP")
+  paymentTerms String?
+  status       ContractStatus @default(DRAFT)
+  notes        String?
+
+  // AMC configuration — all editable per contract
+  amcEnabled         Boolean   @default(true)
+  amcPercent         Decimal   @default(10) @db.Decimal(5, 2)
+  amcIncreasePercent Decimal   @default(0) @db.Decimal(5, 2)
+  amcMethod          AmcMethod @default(COMPOUND)
+  amcStartDate       DateTime? @db.Date // default: contractDate + 1 year
+  amcYears           Int       @default(5)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  client     Client            @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  products   ContractProduct[]
+  amcLines   AmcScheduleLine[]
+  requests   ClientRequest[]
+
+  @@index([clientId])
+  @@index([status])
+}
+
+model ContractProduct {
+  contractId String
+  productId  String
+  contract   Contract    @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  product    LookupValue @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@id([contractId, productId])
+}
+
+model AmcScheduleLine {
+  id                      String        @id @default(cuid())
+  contractId              String
+  yearIndex               Int           // 1-based
+  dueDate                 DateTime      @db.Date
+  increasePercentOverride Decimal?      @db.Decimal(5, 2)
+  amountOverride          Decimal?      @db.Decimal(14, 2)
+  amount                  Decimal       @db.Decimal(14, 2) // effective computed amount
+  status                  AmcLineStatus @default(PENDING)
+  paidAt                  DateTime?     @db.Date
+  paidAmount              Decimal?      @db.Decimal(14, 2)
+  invoiceRef              String?
+  notes                   String?
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@unique([contractId, yearIndex])
+  @@index([dueDate, status])
+}
+
+// ----------------------------------------------------------------------------
+// Client requests (change requests / features / support)
+// ----------------------------------------------------------------------------
+
+enum RequestStatus {
+  NEW
+  UNDER_STUDY
+  QUOTED
+  APPROVED
+  IN_PROGRESS
+  DELIVERED
+  CLOSED
+  REJECTED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model ClientRequest {
+  id             String        @id @default(cuid())
+  number         String        @unique
+  clientId       String
+  contractId     String?
+  typeId         String?
+  title          String
+  description    String?
+  priority       Priority      @default(MEDIUM)
+  assigneeId     String?
+  requestDate    DateTime      @db.Date
+  dueDate        DateTime?     @db.Date
+  estimatedHours Decimal?      @db.Decimal(8, 2)
+  status         RequestStatus @default(NEW)
+  currency       String        @default("EGP")
+  discount       Decimal       @default(0) @db.Decimal(14, 2) // absolute amount
+  vatPercent     Decimal       @default(14) @db.Decimal(5, 2)
+  sortOrder      Int           @default(0) // Kanban ordering within a column
+  closedAt       DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  client     Client          @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  contract   Contract?       @relation(fields: [contractId], references: [id], onDelete: SetNull)
+  type       LookupValue?    @relation("RequestType", fields: [typeId], references: [id])
+  assignee   User?           @relation("RequestAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  items      RequestItem[]
+  quotationItems QuotationItem[]
+
+  @@index([clientId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model RequestItem {
+  id          String  @id @default(cuid())
+  requestId   String
+  item        String
+  description String?
+  qty         Decimal @default(1) @db.Decimal(10, 2)
+  unitPrice   Decimal @default(0) @db.Decimal(14, 2)
+  sortOrder   Int     @default(0)
+
+  request ClientRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+}
+
+// ----------------------------------------------------------------------------
+// Quotations
+// ----------------------------------------------------------------------------
+
+enum QuotationStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+}
+
+model Quotation {
+  id          String          @id @default(cuid())
+  number      String          // shared across versions
+  version     Int             @default(1)
+  clientId    String
+  title       String?
+  status      QuotationStatus @default(DRAFT)
+  lang        Locale          @default(ar)
+  issueDate   DateTime        @db.Date
+  validUntil  DateTime        @db.Date
+  currency    String          @default("EGP")
+  discount    Decimal         @default(0) @db.Decimal(14, 2)
+  vatPercent  Decimal         @default(14) @db.Decimal(5, 2)
+  introText   String?
+  terms       String?         // editable terms & conditions (in quotation lang)
+  sentAt      DateTime?
+  decidedAt   DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  client Client          @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  items  QuotationItem[]
+
+  @@unique([number, version])
+  @@index([clientId])
+  @@index([status])
+}
+
+model QuotationItem {
+  id          String    @id @default(cuid())
+  quotationId String
+  requestId   String?
+  title       String
+  scope       String?   // scope of work
+  startDate   DateTime? @db.Date
+  dueDate     DateTime? @db.Date
+  qty         Decimal   @default(1) @db.Decimal(10, 2)
+  unitPrice   Decimal   @default(0) @db.Decimal(14, 2)
+  sortOrder   Int       @default(0)
+
+  quotation Quotation      @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  request   ClientRequest? @relation(fields: [requestId], references: [id], onDelete: SetNull)
+
+  @@index([quotationId])
+}
+
+// ----------------------------------------------------------------------------
+// Templates (documents & emails)
+// ----------------------------------------------------------------------------
+
+enum DocumentKind {
+  CONTRACT
+  AMC_RENEWAL
+  QUOTATION
+}
+
+model DocumentTemplate {
+  id        String       @id @default(cuid())
+  kind      DocumentKind
+  lang      Locale
+  title     String
+  body      String       // plain text / light markdown with {{placeholders}}
+  updatedAt DateTime     @updatedAt
+
+  @@unique([kind, lang])
+}
+
+enum EmailTemplateKind {
+  AMC_REMINDER
+  AMC_OVERDUE
+  QUOTATION
+  CONTRACT
+  REQUEST_UPDATE
+}
+
+model EmailTemplate {
+  id        String            @id @default(cuid())
+  kind      EmailTemplateKind
+  lang      Locale
+  subject   String
+  body      String
+  updatedAt DateTime          @updatedAt
+
+  @@unique([kind, lang])
+}
+
+// ----------------------------------------------------------------------------
+// Emails, notifications, activity, audit
+// ----------------------------------------------------------------------------
+
+enum EmailStatus {
+  SENT
+  FAILED
+}
+
+model EmailLog {
+  id                String      @id @default(cuid())
+  clientId          String?
+  to                String[]
+  cc                String[]
+  subject           String
+  body              String
+  attachmentName    String?
+  attachmentUrl     String?
+  relatedType       String?     // "contract" | "amc" | "quotation" | "request"
+  relatedId         String?
+  provider          String
+  providerMessageId String?
+  status            EmailStatus
+  error             String?
+  sentById          String?
+  createdAt         DateTime    @default(now())
+
+  client Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  sentBy User?   @relation(fields: [sentById], references: [id], onDelete: SetNull)
+
+  @@index([clientId, createdAt])
+}
+
+enum NotificationKind {
+  AMC_UPCOMING
+  AMC_OVERDUE
+  REQUEST_DUE
+  REQUEST_OVERDUE
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  userId      String
+  kind        NotificationKind
+  entityType  String           // "amc" | "request"
+  entityId    String
+  clientId    String?
+  dueDate     DateTime         @db.Date
+  daysBefore  Int              // negative = days overdue
+  /// Idempotency key: one notification per user/entity/trigger window.
+  triggerKey  String
+  readAt      DateTime?
+  dismissedAt DateTime?
+  emailedAt   DateTime?
+  createdAt   DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, triggerKey])
+  @@index([userId, readAt, dismissedAt])
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  clientId  String
+  type      String   // e.g. "contract.created", "email.sent", "amc.paid"
+  refType   String?
+  refId     String?
+  summary   String
+  meta      Json?
+  actorId   String?
+  createdAt DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  actor  User?  @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([clientId, createdAt])
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  actorId   String?
+  action    AuditAction
+  entity    String
+  entityId  String
+  diff      Json?
+  createdAt DateTime    @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
