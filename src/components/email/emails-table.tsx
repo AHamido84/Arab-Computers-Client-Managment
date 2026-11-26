@@ -29,6 +29,7 @@ export type EmailRow = {
 const RELATED_HREF: Record<string, (id: string) => string> = {
   quotation: (id) => `/quotations/${id}`,
   contract: (id) => `/contracts/${id}`,
+  delivery: (id) => `/delivery/${id}`,
 };
 
 export function EmailsTable({ rows }: { rows: EmailRow[] }) {
@@ -62,7 +63,7 @@ export function EmailsTable({ rows }: { rows: EmailRow[] }) {
             </div>
             {row.original.relatedType && row.original.relatedId && RELATED_HREF[row.original.relatedType] && (
               <Link href={RELATED_HREF[row.original.relatedType](row.original.relatedId)} className="text-xs text-primary hover:underline">
-                {t(`documents.${row.original.relatedType === "amc" ? "amcNotice" : row.original.relatedType}`)}
+                {t(`documents.${row.original.relatedType === "amc" ? "amcNotice" : row.original.relatedType === "delivery" ? "deliveryNote" : row.original.relatedType}`)}
               </Link>
             )}
           </div>

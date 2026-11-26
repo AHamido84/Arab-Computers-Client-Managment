@@ -142,7 +142,15 @@
     "noOverdue": "لا يوجد متأخرات.",
     "myItems": "الخاصة بي فقط",
     "overdueBy": "متأخر {count, plural, zero {# يوم} one {يومًا} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}",
-    "overdueCount": "{count, plural, zero {لا سنوات} one {سنة واحدة غير مدفوعة} two {سنتان غير مدفوعتين} few {# سنوات غير مدفوعة} many {# سنة غير مدفوعة} other {# سنة غير مدفوعة}}"
+    "overdueCount": "{count, plural, zero {لا سنوات} one {سنة واحدة غير مدفوعة} two {سنتان غير مدفوعتين} few {# سنوات غير مدفوعة} many {# سنة غير مدفوعة} other {# سنة غير مدفوعة}}",
+    "deliverySection": "التسليم",
+    "activeProjects": "مشروعات التسليم الجارية",
+    "tasksDueWeek": "مهام مستحقة هذا الأسبوع",
+    "next7Days": "خلال 7 أيام",
+    "overdueTasks": "مهام متأخرة",
+    "onTimeRate": "التسليم في الموعد",
+    "onTimeHint": "{onTime} من {total} مهمة خلال آخر 90 يوماً",
+    "onTimeNone": "لا توجد عمليات تسليم خلال آخر 90 يوماً"
   },
   "clientStatus": {
     "LEAD": "عميل محتمل",
@@ -311,7 +319,9 @@
     "by": "بواسطة {name}",
     "request_deleted": "تم حذف طلب",
     "delivery_created": "تم إنشاء مشروع تسليم",
-    "delivery_delivered": "تم تسليم جميع مهام المشروع"
+    "delivery_delivered": "تم تسليم جميع مهام المشروع",
+    "delivery_accepted": "قبول العميل للتسليم (محضر موقّع)",
+    "delivery_partiallyAccepted": "استلام محضر تسليم موقّع (تسليم جزئي)"
   },
   "contracts": {
     "title": "العقود",
@@ -473,7 +483,14 @@
     "tpl_EMAIL_CONTRACT": "العقد",
     "unsaved": "تغييرات غير محفوظة",
     "tpl_DELIVERY_NOTE": "محضر التسليم",
-    "tpl_EMAIL_DELIVERY_NOTE": "محضر التسليم"
+    "tpl_EMAIL_DELIVERY_NOTE": "محضر التسليم",
+    "deliverySection": "متابعة التسليم",
+    "taskReminderDays": "تذكير المهام (أيام قبل الاستحقاق)",
+    "taskReminderDaysHint": "مفصولة بفواصل، مثل 3, 1. يتم تذكير المسؤولين، وتتكرر تنبيهات المهام المتأخرة حسب جدول التأخير أعلاه.",
+    "weeklyCapacityHours": "الطاقة الأسبوعية لكل شخص (ساعات)",
+    "weeklyCapacityHint": "تُستخدم في عرض عبء العمل لإبراز الأسابيع المحمّلة بأكثر من الطاقة.",
+    "deliveryDigest": "إرسال ملخص التسليم اليومي",
+    "deliveryDigestHint": "كل صباح: المهام المستحقة اليوم والمتأخرة وما تم تسليمه أمس — للمديرين (كل المشروعات) ومديري الحسابات (عملاؤهم)."
   },
   "lookups": {
     "CLIENT_STATUS": "حالات العملاء",
@@ -637,7 +654,14 @@
     "amountDue": "المبلغ المستحق",
     "summary": "ملخص",
     "client": "العميل",
-    "version": "الإصدار {version}"
+    "version": "الإصدار {version}",
+    "projectNo": "رقم المشروع",
+    "deliveredItem": "البند المسلَّم",
+    "deliveredOn": "تاريخ التسليم",
+    "deliveredBy": "المُسلِّم (الشركة)",
+    "receivedBy": "المُستلِم (العميل)",
+    "reference": "المرجع",
+    "remarks": "ملاحظات"
   },
   "documents": {
     "title": "المستندات",
@@ -652,7 +676,8 @@
     "prepareEmail": "تجهيز البريد",
     "emailAmc": "إرسال إشعار التجديد",
     "pdfAr": "PDF عربي",
-    "pdfEn": "PDF إنجليزي"
+    "pdfEn": "PDF إنجليزي",
+    "deliveryNote": "محضر التسليم"
   },
   "email": {
     "compose": "رسالة إلى العميل",
@@ -728,7 +753,13 @@
     "kind_TASK_OVERDUE": "مهمة متأخرة",
     "kind_TASK_DELIVERED": "تم تسليم مهمة",
     "kind_TASK_DUE_CHANGED": "تغيّر موعد مهمة",
-    "kind_TASK_MENTION": "تمت الإشارة إليك"
+    "kind_TASK_MENTION": "تمت الإشارة إليك",
+    "noDate": "بدون تاريخ استحقاق",
+    "assignedBy": "أسندها {name} · الاستحقاق {date}",
+    "deliveredBy": "تم التسليم بواسطة {name}",
+    "dueChangedBy": "غيّر {name} تاريخ الاستحقاق {from} ← {to}: {reason}",
+    "mentionedBy": "{name}: «{excerpt}»",
+    "digestFooterTasks": "افتح صفحة التنبيهات لعرض التفاصيل:"
   },
   "reports": {
     "title": "التقارير",
@@ -775,7 +806,34 @@
     "summary": "الملخص",
     "currencyNote": "الإجماليات بـ{currency}؛ العملات الأخرى مدرجة بشكل منفصل.",
     "acceptanceRate": "نسبة القبول",
-    "empty": "لا توجد بيانات لعوامل التصفية المحددة."
+    "empty": "لا توجد بيانات لعوامل التصفية المحددة.",
+    "delivery": "أداء التسليم",
+    "hoursValue": "{hours} س",
+    "deliveredCount": "المهام المسلَّمة",
+    "onTime": "في الموعد",
+    "late": "متأخرة",
+    "onTimeRate": "نسبة الالتزام بالموعد",
+    "estimatedHours": "الساعات المقدّرة",
+    "actualHours": "الساعات الفعلية",
+    "estimatedVsActual": "الساعات المقدّرة / الفعلية",
+    "dueChanges": "تغييرات مواعيد الاستحقاق",
+    "byPerson": "حسب الشخص",
+    "byProject": "حسب المشروع",
+    "person": "الشخص",
+    "project": "المشروع",
+    "deliveredTasks": "المهام المسلَّمة",
+    "task": "المهمة",
+    "originalDue": "الاستحقاق الأصلي",
+    "deliveredOn": "تاريخ التسليم",
+    "result": "النتيجة",
+    "noTarget": "بدون تاريخ استحقاق",
+    "dueChangeLog": "سجل تغيير مواعيد الاستحقاق",
+    "changedOn": "تاريخ التغيير",
+    "changedBy": "بواسطة",
+    "fromDate": "من",
+    "toDate": "إلى",
+    "reason": "السبب",
+    "deliveryHint": "تُرشَّح المهام حسب تاريخ التسليم والتغييرات حسب تاريخ إجرائها. «في الموعد» = التسليم في تاريخ الاستحقاق الأصلي أو قبله."
   },
   "users": {
     "title": "المستخدمون والصلاحيات",
@@ -898,7 +956,9 @@
     "handover": "تسليم المشروع",
     "cancelProject": "إلغاء المشروع",
     "statusAutoHint": "تصبح الحالة \"تم التسليم\" تلقائيًا عند تسليم كل المهام.",
-    "cannotDelete": "يحتوي هذا المشروع على مهام مُسلَّمة. قم بإلغائه بدلًا من حذفه."
+    "cannotDelete": "يحتوي هذا المشروع على مهام مُسلَّمة. قم بإلغائه بدلًا من حذفه.",
+    "nothingDelivered": "سلّم مهمة واحدة على الأقل أولاً.",
+    "cannotAcceptCancelled": "لا يمكن قبول مشروع ملغي."
   },
   "tasks": {
     "title": "المهام",
@@ -1032,5 +1092,32 @@
     "deleted": "تم حذف البرنامج",
     "duplicate": "يوجد برنامج بنفس الاسم بالفعل.",
     "inUse": "هذا البرنامج مستخدم في عقود — اجعله غير نشط بدلاً من حذفه."
+  },
+  "deliveryDigest": {
+    "subject": "التسليم اليوم: {today} مستحقة، {overdue} متأخرة، {delivered} سُلّمت أمس",
+    "greeting": "صباح الخير {name}،",
+    "intro": "إليك ملخص التسليم لليوم.",
+    "dueToday": "مستحقة اليوم",
+    "overdue": "متأخرة",
+    "deliveredYesterday": "سُلّمت أمس",
+    "wasDue": "كانت مستحقة {date}",
+    "unassigned": "غير مُسندة",
+    "open": "افتح لوحة المهام:"
+  },
+  "handover": {
+    "title": "التسليم",
+    "description": "محضر تسليم ليوقّعه العميل. تتم مراجعة الرسائل قبل إرسالها.",
+    "pdfAr": "محضر التسليم (عربي)",
+    "pdfEn": "محضر التسليم (إنجليزي)",
+    "email": "إرسال محضر التسليم",
+    "draftHint": "لم يتم تسليم أي مهمة بعد — سيعرض المحضر كل المهام حتى يتم تسليم بعضها.",
+    "uploadTitle": "محضر التسليم الموقّع",
+    "uploadHint": "ارفع المحضر بعد توقيعه وختمه من العميل (PDF أو صورة). يصبح المشروع ومهامه المسلَّمة «تم قبول العميل».",
+    "upload": "رفع المحضر الموقّع",
+    "signedLabel": "محضر تسليم موقّع",
+    "accepted": "تم حفظ المحضر الموقّع — المشروع مقبول من العميل",
+    "acceptedOn": "قبول العميل بتاريخ {date}",
+    "partial": "تم حفظ المحضر الموقّع — المهام المسلَّمة أصبحت مقبولة من العميل، ويظل المشروع مفتوحاً حتى تسليم باقي المهام.",
+    "partialNote": "محضر موقّع محفوظ للبنود المسلَّمة:"
   }
 }

@@ -15,7 +15,14 @@
  * never duplicates notifications.
  */
 
-export type ScheduledKind = "AMC_UPCOMING" | "AMC_OVERDUE" | "REQUEST_DUE" | "REQUEST_OVERDUE";
+export type ScheduledKind = "AMC_UPCOMING" | "AMC_OVERDUE" | "REQUEST_DUE" | "REQUEST_OVERDUE" | "TASK_DUE" | "TASK_OVERDUE";
+export type ScheduledType = "amc" | "request" | "task";
+
+const KINDS: Record<ScheduledType, [ScheduledKind, ScheduledKind]> = {
+  amc: ["AMC_UPCOMING", "AMC_OVERDUE"],
+  request: ["REQUEST_DUE", "REQUEST_OVERDUE"],
+  task: ["TASK_DUE", "TASK_OVERDUE"],
+};
 
 export type Trigger = {
   kind: ScheduledKind;
@@ -34,7 +41,7 @@ export function daysUntil(due: Date, today: Date) {
 }
 
 export function computeTrigger(
-  item: { type: "amc" | "request"; id: string; dueDate: Date },
+  item: { type: ScheduledType; id: string; dueDate: Date },
   today: Date,
   opts: { intervals: number[]; overdueEveryDays: number },
 ): Trigger | null {
@@ -45,7 +52,7 @@ export function computeTrigger(
     const window = windows.find((w) => w >= days);
     if (window === undefined) return null;
     return {
-      kind: item.type === "amc" ? "AMC_UPCOMING" : "REQUEST_DUE",
+      kind: KINDS[item.type][0],
       daysBefore: days,
       triggerKey: `${base}:before:${window}`,
     };
@@ -54,7 +61,7 @@ export function computeTrigger(
   const every = Math.max(1, Math.trunc(opts.overdueEveryDays) || 1);
   const bucket = Math.floor((overdue - 1) / every);
   return {
-    kind: item.type === "amc" ? "AMC_OVERDUE" : "REQUEST_OVERDUE",
+    kind: KINDS[item.type][1],
     daysBefore: days,
     triggerKey: `${base}:overdue:${bucket}`,
   };

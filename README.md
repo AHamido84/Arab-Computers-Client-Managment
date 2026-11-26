@@ -169,9 +169,37 @@ Implemented in `src/lib/amc/engine.ts` and covered by `tests/amc-engine.test.ts`
 - If enabled, each recipient also gets **one digest email per run** in their own language. Admins can trigger the same job with **Run daily check now**.
 - The scheduling rules live in `src/lib/notifications/schedule.ts` and are covered by `tests/notifications.test.ts`.
 
+#### Delivery notifications
+
+- **Instant** (in-app, plus email if enabled), never to the person who did the action:
+  - *Task assigned* goes to the people just added.
+  - *Mention* goes to the people @mentioned in a comment.
+  - *Due date changed* goes to the assignees, watchers and the client's account manager, with the old date, new date and reason.
+  - *Task delivered* goes to the task lead, watchers and the client's account manager.
+- **Daily job:**
+  - *Task due soon* goes to the assignees, on the days set in *Task reminders*.
+  - *Overdue task* goes to the assignees and the account manager, repeating on the overdue schedule.
+- **Daily delivery digest** (one email per person per day, skipped when empty): tasks due today, overdue tasks and tasks delivered yesterday.
+  - Admins get every project; account managers get their clients' projects.
+  - Turn it off in *Settings → Notifications & email → Delivery tracking*.
+- The recipient and digest rules are in `src/lib/notifications/task-events.ts`.
+
+### Handover (delivery note)
+
+- The *Handover* card on a delivery project produces the **Delivery Note / محضر تسليم** PDF in Arabic or English. It lists the delivered items without prices, plus remarks lines and signature blocks. Edit its wording in *Settings → Templates*.
+- **Email delivery note** opens the usual reviewed compose form with the PDF attached.
+- **Upload signed note** stores the client-signed note and marks the delivered tasks *Client accepted*.
+  - The project becomes *Client accepted* only once no task is left open. Until then it is a partial handover, and the open tasks keep their reminders.
+
 ### Reports
 
-*Reports* has four tabs: AMC schedule, Requests (by status, by client, details), Quotations (latest versions, acceptance rate) and Client statement. Each has filters and exports to **PDF** (landscape, on the letterhead) and **Excel** (summary sheet plus one sheet per table, with numeric money and date columns).
+*Reports* has five tabs: AMC schedule, Requests (by status, by client, details), Quotations (latest versions, acceptance rate), **Delivery performance** and Client statement.
+
+- **Delivery performance** shows on-time vs late per person, client and project, estimated vs actual hours, every delivered task, and the due-date change log with reasons.
+- "On time" means delivered on or before the task's **original** due date, so moving a due date never hides a delay.
+- The dashboard also shows active delivery projects, tasks due in the next 7 days, overdue tasks and the 90-day on-time rate.
+
+Every report tab has filters and exports to **PDF** (landscape, on the letterhead) and **Excel** (summary sheet plus one sheet per table, with numeric money and date columns).
 
 ### Documents & email
 

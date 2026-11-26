@@ -14,6 +14,7 @@ import type { ViewKey } from "@/components/delivery/view-switcher";
 import { ProgressBar } from "@/components/delivery/progress-bar";
 import { PROJECT_STATUS_COLOR } from "@/components/delivery/projects-table";
 import { AddTaskDialog, EditProjectDialog } from "@/components/delivery/project-dialogs";
+import { HandoverCard } from "@/components/delivery/handover-card";
 import { can, requirePagePermission } from "@/server/auth-guard";
 import { getDeliveryPeople, getProject, listTasks } from "@/server/services/delivery";
 import { listAttachments } from "@/server/services/attachments";
@@ -122,7 +123,27 @@ export default async function ProjectPage({ params, searchParams }: PageProps<"/
         project={{ startDate: p.startDate?.toISOString() ?? null, targetDate: p.targetDate?.toISOString() ?? null }}
       />
 
-      <Card className="mt-6">
+      <div className="mt-6 space-y-6">
+      {p.status !== "CANCELLED" && (
+        <HandoverCard
+          projectId={p.id}
+          canManage={canManage}
+          canEmail={can(user.role, "sendEmail")}
+          hasDelivered={done > 0}
+          accepted={
+            p.status === "CLIENT_ACCEPTED" && p.acceptedAt
+              ? { at: p.acceptedAt.toISOString(), fileId: p.signedNoteId, filename: files.find((x) => x.id === p.signedNoteId)?.filename ?? null }
+              : null
+          }
+          partialNote={
+            p.status !== "CLIENT_ACCEPTED" && p.signedNoteId
+              ? { fileId: p.signedNoteId, filename: files.find((x) => x.id === p.signedNoteId)?.filename ?? null }
+              : null
+          }
+        />
+      )}
+
+      <Card>
         <CardHeader>
           <CardTitle>{t("files.title")}</CardTitle>
         </CardHeader>
@@ -130,6 +151,7 @@ export default async function ProjectPage({ params, searchParams }: PageProps<"/
           <AttachmentsPanel entityType="DELIVERY_PROJECT" entityId={p.id} items={toAttachmentItems(files)} canWrite={canManage} canDelete={canManage} revalidate={`/delivery/${p.id}`} />
         </CardContent>
       </Card>
+      </div>
     </>
   );
 }

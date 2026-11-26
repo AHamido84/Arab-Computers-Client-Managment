@@ -6,13 +6,15 @@ import { formatDate, formatMoney, formatNumber, todayUTC } from "@/lib/format";
 import { computeTotals } from "@/lib/totals";
 import { OPEN_REQUEST_STATUSES } from "@/lib/validation/request";
 import { getSettings } from "./settings";
+import { summarize, summarizeBy, type KpiItem, type KpiSummary } from "@/lib/delivery-kpis";
+import { deliveredOnTime } from "@/lib/delivery";
 
 /**
  * Report engine. Each report returns a language-specific, format-agnostic
  * structure (summary + tables with typed columns) that is rendered on screen,
  * as PDF (src/pdf/report.tsx) and as Excel (/api/reports/[type]?format=xlsx).
  */
-export const REPORT_TYPES = ["amc", "requests", "quotations", "statement"] as const;
+export const REPORT_TYPES = ["amc", "requests", "quotations", "delivery", "statement"] as const;
 export type ReportType = (typeof REPORT_TYPES)[number];
 type Lang = "ar" | "en";
 
@@ -29,6 +31,13 @@ const range = (f: ReportFilters) => {
   const from = parseDate(f.from);
   const to = parseDate(f.to);
   return from || to ? { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } : undefined;
+};
+
+/** Same as `range` but for timestamp columns: the "to" day is included in full. */
+const dayRange = (f: ReportFilters) => {
+  const from = parseDate(f.from);
+  const to = parseDate(f.to);
+  return from || to ? { ...(from ? { gte: from } : {}), ...(to ? { lt: new Date(to.getTime() + 86_400_000) } : {}) } : undefined;
 };
 
 /** Default filters: AMC this calendar year; requests/quotations last 12 months. */
@@ -254,6 +263,122 @@ export async function buildReport(type: ReportType, filters: ReportFilters, lang
             status: statusLabel("quotationStatus", q.status), date: q.issueDate.toISOString(), valid: q.validUntil.toISOString(),
             total, _currency: q.currency, _href: `/quotations/${q.id}`,
             _tone: q.status === "ACCEPTED" ? "green" : q.status === "REJECTED" ? "red" : null,
+          })),
+        },
+      ],
+    };
+  }
+
+  // ---- Delivery: on-time vs late, estimated vs actual hours, due-date changes ----
+  if (type === "delivery") {
+    const delivered = await db.deliveryTask.findMany({
+      where: {
+        deliveredAt: dayRange(filters) ?? { not: null },
+        project: { status: { not: "CANCELLED" }, ...(filters.clientId ? { clientId: filters.clientId } : {}) },
+        ...(filters.userId ? { assignees: { some: { userId: filters.userId } } } : {}),
+      },
+      orderBy: { deliveredAt: "desc" },
+      include: {
+        project: { select: { id: true, number: true, title: true, client: { select: { id: true, nameAr: true, nameEn: true } } } },
+        assignees: { select: { userId: true, user: { select: { name: true } } } },
+        timeLogs: { select: { userId: true, hours: true } },
+      },
+    });
+    const changes = await db.taskDueDateChange.findMany({
+      where: {
+        createdAt: dayRange(filters),
+        task: {
+          project: { status: { not: "CANCELLED" }, ...(filters.clientId ? { clientId: filters.clientId } : {}) },
+          ...(filters.userId ? { assignees: { some: { userId: filters.userId } } } : {}),
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      include: { changedBy: { select: { name: true } }, task: { select: { id: true, title: true, project: { select: { number: true } } } } },
+    });
+
+    const hours = (logs: { hours: unknown }[]) => logs.reduce((a, l) => a + Number(l.hours), 0);
+    const kpi = (tk: (typeof delivered)[number], est = Number(tk.estimatedHours ?? 0), act = hours(tk.timeLogs)): KpiItem => ({
+      deliveredAt: tk.deliveredAt, originalDueDate: tk.originalDueDate, dueDate: tk.dueDate, estimated: est, actual: act,
+    });
+    const total = summarize(delivered.map((tk) => kpi(tk)));
+    const pct = (v: number | null) => (v == null ? "—" : `${formatNumber(v, lang)}%`);
+    const h = (v: number) => t("reports.hoursValue", { hours: formatNumber(v, lang, undefined, 1) });
+    const toneFor = (r: number | null) => (r == null ? null : r >= 80 ? "green" : r < 60 ? "red" : null);
+    const groupCols = (first: { key: string; label: string }) => [
+      { ...first, type: "text" as const },
+      { key: "delivered", label: t("reports.deliveredCount"), type: "number" as const, align: "end" as const },
+      { key: "onTime", label: t("reports.onTime"), type: "number" as const, align: "end" as const },
+      { key: "late", label: t("reports.late"), type: "number" as const, align: "end" as const },
+      { key: "rate", label: t("reports.onTimeRate"), type: "text" as const, align: "end" as const },
+      { key: "estimated", label: t("reports.estimatedHours"), type: "number" as const, align: "end" as const },
+      { key: "actual", label: t("reports.actualHours"), type: "number" as const, align: "end" as const },
+    ];
+    const groupRow = (g: KpiSummary & { label: string }, href?: string) => ({
+      name: g.label, delivered: g.delivered, onTime: g.onTime, late: g.late, rate: pct(g.rate), estimated: g.estimated, actual: g.actual,
+      _href: href ?? null, _tone: toneFor(g.rate),
+    });
+    // Per person: each assignee gets an equal share of the estimate and the hours they logged themselves.
+    const byPerson = summarizeBy(delivered, (tk) =>
+      tk.assignees
+        .filter((a) => !filters.userId || a.userId === filters.userId)
+        .map((a) => ({ key: a.userId, label: a.user.name, item: kpi(tk, Number(tk.estimatedHours ?? 0) / tk.assignees.length, hours(tk.timeLogs.filter((l) => l.userId === a.userId))) })),
+    );
+    const byClient = summarizeBy(delivered, (tk) => [{ key: tk.project.client.id, label: name(tk.project.client), item: kpi(tk) }]);
+    const byProject = summarizeBy(delivered, (tk) => [{ key: tk.project.id, label: `${tk.project.number} · ${tk.project.title}`, item: kpi(tk) }]);
+    const changeCount = changes.length;
+
+    return {
+      type, currency: cur, empty: delivered.length === 0 && changeCount === 0,
+      title: t("reports.delivery"),
+      filtersText: parts.join(" · "),
+      summary: [
+        [t("reports.deliveredCount"), formatNumber(total.delivered, lang)],
+        [t("reports.onTimeRate"), pct(total.rate)],
+        [t("reports.late"), formatNumber(total.late, lang)],
+        [t("reports.estimatedVsActual"), `${h(total.estimated)} / ${h(total.actual)}`],
+        [t("reports.dueChanges"), formatNumber(changeCount, lang)],
+      ],
+      tables: [
+        { title: t("reports.byPerson"), columns: groupCols({ key: "name", label: t("reports.person") }), rows: byPerson.map((g) => groupRow(g)) },
+        { title: t("reports.byClient"), columns: groupCols({ key: "name", label: t("reports.client") }), rows: byClient.map((g) => groupRow(g, `/clients/${g.key}`)) },
+        { title: t("reports.byProject"), columns: groupCols({ key: "name", label: t("reports.project") }), rows: byProject.map((g) => groupRow(g, `/delivery/${g.key}`)) },
+        {
+          title: t("reports.deliveredTasks"),
+          columns: [
+            { key: "task", label: t("reports.task"), type: "text" },
+            { key: "project", label: t("reports.project"), type: "text" },
+            { key: "people", label: t("reports.assignee"), type: "text" },
+            { key: "original", label: t("reports.originalDue"), type: "date" },
+            { key: "delivered", label: t("reports.deliveredOn"), type: "date" },
+            { key: "result", label: t("reports.result"), type: "status" },
+            { key: "estimated", label: t("reports.estimatedHours"), type: "number", align: "end" },
+            { key: "actual", label: t("reports.actualHours"), type: "number", align: "end" },
+          ],
+          rows: delivered.map((tk) => {
+            const ok = deliveredOnTime(tk);
+            return {
+              task: tk.title, project: tk.project.number, people: tk.assignees.map((a) => a.user.name).join(", "),
+              original: (tk.originalDueDate ?? tk.dueDate)?.toISOString() ?? null, delivered: tk.deliveredAt!.toISOString(),
+              result: ok == null ? t("reports.noTarget") : ok ? t("reports.onTime") : t("reports.late"),
+              estimated: tk.estimatedHours == null ? null : Number(tk.estimatedHours), actual: Math.round(hours(tk.timeLogs) * 100) / 100,
+              _href: `/tasks/${tk.id}`, _tone: ok == null ? "slate" : ok ? "green" : "red",
+            };
+          }),
+        },
+        {
+          title: t("reports.dueChangeLog"),
+          columns: [
+            { key: "when", label: t("reports.changedOn"), type: "date" },
+            { key: "task", label: t("reports.task"), type: "text" },
+            { key: "project", label: t("reports.project"), type: "text" },
+            { key: "by", label: t("reports.changedBy"), type: "text" },
+            { key: "from", label: t("reports.fromDate"), type: "date" },
+            { key: "to", label: t("reports.toDate"), type: "date" },
+            { key: "reason", label: t("reports.reason"), type: "text" },
+          ],
+          rows: changes.map((c) => ({
+            when: c.createdAt.toISOString(), task: c.task.title, project: c.task.project.number, by: c.changedBy?.name ?? "—",
+            from: c.oldDate?.toISOString() ?? null, to: c.newDate?.toISOString() ?? null, reason: c.reason, _href: `/tasks/${c.task.id}`,
           })),
         },
       ],

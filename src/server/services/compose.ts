@@ -7,11 +7,12 @@ import { createTranslator } from "next-intl";
 import { messagesFor } from "@/i18n/messages";
 import { formatDate } from "@/lib/format";
 import type { DocKind } from "./documents";
-import { amcVars, baseVars, contractVars, quotationVars } from "./template-vars";
+import { amcVars, baseVars, contractVars, deliveryVars, quotationVars } from "./template-vars";
+import { loadDeliveryProject } from "./documents";
 
 /** Kinds that can be emailed. "request" emails have no PDF attachment. */
 export type ComposeKind = DocKind | "request";
-export const COMPOSE_KINDS: ComposeKind[] = ["contract", "amc", "quotation", "request"];
+export const COMPOSE_KINDS: ComposeKind[] = ["contract", "amc", "quotation", "request", "delivery"];
 
 type Lang = "ar" | "en";
 
@@ -61,6 +62,15 @@ export async function prepareEmail(kind: ComposeKind, id: string, langOverride?:
     templateKind = "REQUEST_UPDATE";
     reference = r.number;
     attachmentBase = "";
+  } else if (kind === "delivery") {
+    const p = await loadDeliveryProject(id);
+    if (!p) return null;
+    lang = langOverride ?? p.client.preferredLang;
+    client = p.client;
+    vars = await deliveryVars(p, lang);
+    templateKind = "DELIVERY_NOTE";
+    reference = p.number;
+    attachmentBase = `${p.number}-delivery`;
   } else if (kind === "quotation") {
     const q = await db.quotation.findUnique({ where: { id }, include: { client: { include: { contacts: true } }, items: true } });
     if (!q) return null;

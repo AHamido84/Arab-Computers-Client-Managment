@@ -2,6 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { todayUTC } from "@/lib/format";
 import { OPEN_REQUEST_STATUSES } from "@/lib/validation/request";
+import { summarize } from "@/lib/delivery-kpis";
 
 
 function sumBy<T>(rows: T[], f: (r: T) => number) {
@@ -122,4 +123,20 @@ export async function getOverdueLists(limit = 8) {
     requests,
     byStatus: OPEN_REQUEST_STATUSES.map((s) => ({ status: s, count: byStatus.find((b) => b.status === s)?._count._all ?? 0 })),
   };
+}
+
+/** Delivery KPIs: active projects, tasks due in the next 7 days, overdue tasks, on-time rate (last 90 days). */
+export async function getDeliveryKpis() {
+  const today = todayUTC();
+  const in7 = new Date(today.getTime() + 7 * 86_400_000);
+  const since = new Date(today.getTime() - 90 * 86_400_000);
+  const open = { status: { notIn: ["DELIVERED" as const, "CLIENT_ACCEPTED" as const] }, project: { status: { in: ["ACTIVE" as const, "ON_HOLD" as const] } } };
+  const [activeProjects, dueWeek, overdue, delivered] = await Promise.all([
+    db.deliveryProject.count({ where: { status: { in: ["ACTIVE", "ON_HOLD"] } } }),
+    db.deliveryTask.count({ where: { ...open, dueDate: { gte: today, lt: in7 } } }),
+    db.deliveryTask.count({ where: { ...open, dueDate: { lt: today } } }),
+    db.deliveryTask.findMany({ where: { deliveredAt: { gte: since } }, select: { deliveredAt: true, dueDate: true, originalDueDate: true } }),
+  ]);
+  const s = summarize(delivered.map((d) => ({ ...d, estimated: 0, actual: 0 })));
+  return { activeProjects, dueWeek, overdue, onTimeRate: s.rate, onTime: s.onTime, measured: s.onTime + s.late };
 }

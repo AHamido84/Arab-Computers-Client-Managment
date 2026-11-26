@@ -15,6 +15,7 @@ const STATUS: Record<ReportType, { ns: string; values: string[] } | null> = {
   amc: { ns: "amcStatus", values: ["PENDING", "OVERDUE", "PAID"] },
   requests: { ns: "requestStatus", values: ["NEW", "UNDER_STUDY", "QUOTED", "APPROVED", "IN_PROGRESS", "DELIVERED", "CLOSED", "REJECTED"] },
   quotations: { ns: "quotationStatus", values: ["DRAFT", "SENT", "ACCEPTED", "REJECTED"] },
+  delivery: null,
   statement: null,
 };
 const ALL = "__all";
@@ -91,7 +92,7 @@ export function ReportFiltersBar({
           </Select>
         </div>
       )}
-      {(type === "amc" || type === "requests") && (
+      {(type === "amc" || type === "requests" || type === "delivery") && (
         <div className="grid gap-1">
           <Label className="text-xs">{type === "amc" ? t("reports.manager") : t("reports.assignee")}</Label>
           <Select value={v.userId ?? ALL} onValueChange={(val) => set("userId", val)}>

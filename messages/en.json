@@ -142,7 +142,15 @@
     "noOverdue": "Nothing overdue.",
     "myItems": "Only mine",
     "overdueBy": "{count, plural, one {# day} other {# days}} late",
-    "overdueCount": "{count, plural, one {# unpaid year} other {# unpaid years}}"
+    "overdueCount": "{count, plural, one {# unpaid year} other {# unpaid years}}",
+    "deliverySection": "Delivery",
+    "activeProjects": "Active delivery projects",
+    "tasksDueWeek": "Tasks due this week",
+    "next7Days": "Next 7 days",
+    "overdueTasks": "Overdue tasks",
+    "onTimeRate": "On-time delivery",
+    "onTimeHint": "{onTime} of {total} tasks in the last 90 days",
+    "onTimeNone": "No deliveries in the last 90 days"
   },
   "clientStatus": {
     "LEAD": "Lead",
@@ -311,7 +319,9 @@
     "by": "by {name}",
     "request_deleted": "Request deleted",
     "delivery_created": "Delivery project created",
-    "delivery_delivered": "All delivery tasks delivered"
+    "delivery_delivered": "All delivery tasks delivered",
+    "delivery_accepted": "Delivery accepted by client (signed note)",
+    "delivery_partiallyAccepted": "Signed delivery note received (partial delivery)"
   },
   "contracts": {
     "title": "Contracts",
@@ -473,7 +483,14 @@
     "tpl_EMAIL_CONTRACT": "Contract",
     "unsaved": "Unsaved changes",
     "tpl_DELIVERY_NOTE": "Delivery note",
-    "tpl_EMAIL_DELIVERY_NOTE": "Delivery note"
+    "tpl_EMAIL_DELIVERY_NOTE": "Delivery note",
+    "deliverySection": "Delivery tracking",
+    "taskReminderDays": "Task reminders (days before due date)",
+    "taskReminderDaysHint": "Comma-separated, e.g. 3, 1. Assignees are reminded; overdue tasks repeat on the overdue schedule above.",
+    "weeklyCapacityHours": "Weekly capacity per person (hours)",
+    "weeklyCapacityHint": "Used by the Workload view to highlight overloaded weeks.",
+    "deliveryDigest": "Send the daily delivery digest",
+    "deliveryDigestHint": "Every morning: tasks due today, overdue tasks and tasks delivered yesterday — to admins (all projects) and account managers (their clients)."
   },
   "lookups": {
     "CLIENT_STATUS": "Client statuses",
@@ -637,7 +654,14 @@
     "amountDue": "Amount due",
     "summary": "Summary",
     "client": "Client",
-    "version": "v{version}"
+    "version": "v{version}",
+    "projectNo": "Project no.",
+    "deliveredItem": "Delivered item",
+    "deliveredOn": "Delivered on",
+    "deliveredBy": "Delivered by (company)",
+    "receivedBy": "Received by (client)",
+    "reference": "Reference",
+    "remarks": "Remarks"
   },
   "documents": {
     "title": "Documents",
@@ -652,7 +676,8 @@
     "prepareEmail": "Prepare email",
     "emailAmc": "Email renewal notice",
     "pdfAr": "Arabic PDF",
-    "pdfEn": "English PDF"
+    "pdfEn": "English PDF",
+    "deliveryNote": "Delivery note"
   },
   "email": {
     "compose": "Email to client",
@@ -728,7 +753,13 @@
     "kind_TASK_OVERDUE": "Overdue task",
     "kind_TASK_DELIVERED": "Task delivered",
     "kind_TASK_DUE_CHANGED": "Task due date changed",
-    "kind_TASK_MENTION": "You were mentioned"
+    "kind_TASK_MENTION": "You were mentioned",
+    "noDate": "no due date",
+    "assignedBy": "Assigned by {name} · due {date}",
+    "deliveredBy": "Marked delivered by {name}",
+    "dueChangedBy": "{name} moved the due date {from} → {to}: {reason}",
+    "mentionedBy": "{name}: “{excerpt}”",
+    "digestFooterTasks": "Open your notifications to see the details:"
   },
   "reports": {
     "title": "Reports",
@@ -775,7 +806,34 @@
     "summary": "Summary",
     "currencyNote": "Totals are in {currency}; other currencies are listed separately.",
     "acceptanceRate": "Acceptance rate",
-    "empty": "No data for the selected filters."
+    "empty": "No data for the selected filters.",
+    "delivery": "Delivery performance",
+    "hoursValue": "{hours} h",
+    "deliveredCount": "Tasks delivered",
+    "onTime": "On time",
+    "late": "Late",
+    "onTimeRate": "On-time rate",
+    "estimatedHours": "Estimated h",
+    "actualHours": "Actual h",
+    "estimatedVsActual": "Estimated / actual hours",
+    "dueChanges": "Due-date changes",
+    "byPerson": "By person",
+    "byProject": "By project",
+    "person": "Person",
+    "project": "Project",
+    "deliveredTasks": "Delivered tasks",
+    "task": "Task",
+    "originalDue": "Original due date",
+    "deliveredOn": "Delivered on",
+    "result": "Result",
+    "noTarget": "No due date",
+    "dueChangeLog": "Due-date change log",
+    "changedOn": "Changed on",
+    "changedBy": "Changed by",
+    "fromDate": "From",
+    "toDate": "To",
+    "reason": "Reason",
+    "deliveryHint": "Dates filter tasks by delivery date and changes by the date they were made. On time = delivered on or before the original due date."
   },
   "users": {
     "title": "Users & roles",
@@ -898,7 +956,9 @@
     "handover": "Delivery handover",
     "cancelProject": "Cancel project",
     "statusAutoHint": "Status becomes Delivered automatically when all tasks are delivered.",
-    "cannotDelete": "This project has delivered tasks. Cancel it instead of deleting."
+    "cannotDelete": "This project has delivered tasks. Cancel it instead of deleting.",
+    "nothingDelivered": "Mark at least one task as delivered first.",
+    "cannotAcceptCancelled": "A cancelled project can't be accepted."
   },
   "tasks": {
     "title": "Tasks",
@@ -1032,5 +1092,32 @@
     "deleted": "Software deleted",
     "duplicate": "Software with this name already exists.",
     "inUse": "This software is used in contracts — make it inactive instead of deleting it."
+  },
+  "deliveryDigest": {
+    "subject": "Delivery today: {today} due, {overdue} overdue, {delivered} delivered yesterday",
+    "greeting": "Good morning {name},",
+    "intro": "Here is today's delivery summary.",
+    "dueToday": "Due today",
+    "overdue": "Overdue",
+    "deliveredYesterday": "Delivered yesterday",
+    "wasDue": "was due {date}",
+    "unassigned": "unassigned",
+    "open": "Open the tasks board:"
+  },
+  "handover": {
+    "title": "Handover",
+    "description": "Delivery note (محضر تسليم) for the client to sign. Emails are reviewed before sending.",
+    "pdfAr": "Delivery note (Arabic)",
+    "pdfEn": "Delivery note (English)",
+    "email": "Email delivery note",
+    "draftHint": "Nothing is delivered yet — the note will list all tasks until some are marked delivered.",
+    "uploadTitle": "Signed delivery note",
+    "uploadHint": "Upload the note signed and stamped by the client (PDF or image). The project and its delivered tasks become Client accepted.",
+    "upload": "Upload signed note",
+    "signedLabel": "Signed delivery note",
+    "accepted": "Signed note saved — project marked as client accepted",
+    "acceptedOn": "Client accepted on {date}",
+    "partial": "Signed note saved — delivered tasks marked as client accepted; the project stays open until the remaining tasks are delivered.",
+    "partialNote": "Signed note on file for delivered items:"
   }
 }

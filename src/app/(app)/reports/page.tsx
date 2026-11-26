@@ -11,6 +11,7 @@ import { ReportFiltersBar } from "@/components/reports/report-filters";
 import { requirePagePermission } from "@/server/auth-guard";
 import { buildReport, defaultFilters, formatCell, parseFilters, REPORT_TYPES, type ReportType } from "@/server/services/reports";
 import { getAssignableUsers, getClientOptions } from "@/server/services/lookups";
+import { getDeliveryPeople } from "@/server/services/delivery";
 import type { AppLocale } from "@/i18n/config";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +25,12 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
   const type: ReportType = REPORT_TYPES.includes(sp.type as ReportType) ? (sp.type as ReportType) : "amc";
   const explicit = parseFilters(sp);
   const filters = Object.values(explicit).some(Boolean) ? explicit : defaultFilters(type);
-  const [t, locale, clients, users] = await Promise.all([getTranslations(), getLocale() as Promise<AppLocale>, getClientOptions(), getAssignableUsers()]);
+  const [t, locale, clients, users] = await Promise.all([
+    getTranslations(),
+    getLocale() as Promise<AppLocale>,
+    getClientOptions(),
+    type === "delivery" ? getDeliveryPeople() : getAssignableUsers(),
+  ]);
   const report = await buildReport(type, filters, locale);
   const q = new URLSearchParams(Object.entries(filters).filter(([, v]) => v) as [string, string][]);
   q.set("lang", locale);
@@ -71,7 +77,8 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
         <>
           <div className="mt-4 mb-2 text-sm text-muted-foreground">
             <span className="font-medium text-foreground">{report.title}</span>
-            {report.filtersText && <> · {report.filtersText}</>} · {t("reports.currencyNote", { currency: report.currency })}
+            {report.filtersText && <> · {report.filtersText}</>}
+            {type === "delivery" ? <> · {t("reports.deliveryHint")}</> : <> · {t("reports.currencyNote", { currency: report.currency })}</>}
           </div>
           <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             {report.summary.map(([k, v]) => (

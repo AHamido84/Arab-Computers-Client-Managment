@@ -9,6 +9,8 @@ import {
   ClipboardList,
   FileSignature,
   FileText,
+  FolderKanban,
+  Target,
   TimerOff,
   TrendingUp,
 } from "lucide-react";
@@ -19,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { requireUser } from "@/server/auth-guard";
-import { getAmcByMonth, getDashboardKpis, getOverdueLists } from "@/server/services/dashboard";
+import { getAmcByMonth, getDashboardKpis, getDeliveryKpis, getOverdueLists } from "@/server/services/dashboard";
 import { AmcChart } from "@/components/dashboard/amc-chart";
 import { Button } from "@/components/ui/button";
 import { StatusBadge, STATUS_COLOR } from "@/components/shared/status-badge";
@@ -38,12 +40,13 @@ export default async function DashboardPage() {
   // Team members have no access to business data — their home is "My tasks".
   if (!can(user.role, "read")) redirect("/my-tasks");
   const settings = await getSettings();
-  const [t, locale, k, months, overdue] = await Promise.all([
+  const [t, locale, k, months, overdue, dk] = await Promise.all([
     getTranslations(),
     getLocale() as Promise<AppLocale>,
     getDashboardKpis(),
     getAmcByMonth(settings.defaultCurrency),
     getOverdueLists(),
+    getDeliveryKpis(),
   ]);
   const canEmail = can(user.role, "sendEmail");
   const maxStatus = Math.max(1, ...overdue.byStatus.map((b) => b.count));
@@ -78,6 +81,22 @@ export default async function DashboardPage() {
           tone={k.overdueRequests ? "danger" : "default"}
         />
         <KpiCard label={t("dashboard.pendingQuotations")} value={money(k.pendingQuotationsValue)} icon={FileText} />
+      </div>
+
+      <h2 className="mt-8 mb-3 text-sm font-semibold text-muted-foreground">
+        <Link href="/delivery" className="hover:underline">{t("dashboard.deliverySection")}</Link>
+      </h2>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <KpiCard label={t("dashboard.activeProjects")} value={n(dk.activeProjects)} icon={FolderKanban} />
+        <KpiCard label={t("dashboard.tasksDueWeek")} value={n(dk.dueWeek)} hint={t("dashboard.next7Days")} icon={CalendarClock} tone="accent" />
+        <KpiCard label={t("dashboard.overdueTasks")} value={n(dk.overdue)} icon={TimerOff} tone={dk.overdue ? "danger" : "default"} />
+        <KpiCard
+          label={t("dashboard.onTimeRate")}
+          value={dk.onTimeRate == null ? "—" : `${n(dk.onTimeRate)}%`}
+          hint={dk.measured ? t("dashboard.onTimeHint", { onTime: dk.onTime, total: dk.measured }) : t("dashboard.onTimeNone")}
+          icon={Target}
+          tone={dk.onTimeRate == null ? "default" : dk.onTimeRate >= 80 ? "success" : "danger"}
+        />
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-3 [&>*]:min-w-0">

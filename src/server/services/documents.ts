@@ -10,15 +10,15 @@ import { formatDate, formatMoney, formatNumber } from "@/lib/format";
 import { computeTotals, lineTotal } from "@/lib/totals";
 import { fillPlaceholders } from "@/lib/templates/render";
 import { registerPdfFonts } from "@/pdf/fonts";
-import { AmcNoticePdf, ContractPdf, QuotationPdf, type Labels } from "@/pdf/templates";
+import { AmcNoticePdf, ContractPdf, DeliveryNotePdf, QuotationPdf, type Labels } from "@/pdf/templates";
 import type { Company, Lang } from "@/pdf/letterhead";
 import { getSettings } from "./settings";
 import { getDocumentTemplates } from "./templates";
 import { readFileBuffer } from "./storage";
-import { amcVars, contractVars, productsText, quotationVars } from "./template-vars";
+import { amcVars, contractVars, deliveryVars, productsText, quotationVars } from "./template-vars";
 
-export type DocKind = "contract" | "amc" | "quotation";
-export const DOC_KINDS: DocKind[] = ["contract", "amc", "quotation"];
+export type DocKind = "contract" | "amc" | "quotation" | "delivery";
+export const DOC_KINDS: DocKind[] = ["contract", "amc", "quotation", "delivery"];
 
 export type BuiltDocument = { buffer: Buffer; filename: string; lang: Lang; clientId: string; title: string };
 
@@ -44,7 +44,7 @@ async function letterhead(lang: Lang): Promise<{ company: Company; logo: Buffer 
 
 function labels(lang: Lang, companyName: string): Labels {
   const t = createTranslator({ locale: lang, messages: messagesFor(lang), namespace: "pdf" });
-  const keys = ["to", "attn", "date", "ref", "item", "scope", "delivery", "qty", "unitPrice", "total", "subtotal", "discount", "grandTotal", "validUntil", "terms", "amcSchedule", "year", "dueDate", "amount", "forClient", "signature", "name", "stamp", "contractNo", "quotationNo", "noticeNo", "maintenanceYear", "contractValue", "systems", "taxNo", "cr", "amountDue", "client"] as const;
+  const keys = ["to", "attn", "date", "ref", "item", "scope", "delivery", "qty", "unitPrice", "total", "subtotal", "discount", "grandTotal", "validUntil", "terms", "amcSchedule", "year", "dueDate", "amount", "forClient", "signature", "name", "stamp", "contractNo", "quotationNo", "noticeNo", "maintenanceYear", "contractValue", "systems", "taxNo", "cr", "amountDue", "client", "projectNo", "deliveredItem", "deliveredOn", "deliveredBy", "receivedBy", "reference", "remarks"] as const;
   const out = Object.fromEntries(keys.map((k) => [k, t(k)])) as Record<string, string>;
   out.forCompanyName = t("forCompany", { name: companyName });
   return Object.assign(out, { pageFn: (page: number, pages: number) => t("page", { page, pages }) }) as unknown as Labels;
@@ -59,6 +59,7 @@ async function render(el: React.ReactElement) {
 
 /** Build a PDF. `lang` defaults to the client's preferred language. */
 export async function buildDocument(kind: DocKind, id: string, langOverride?: Lang): Promise<BuiltDocument | null> {
+  if (kind === "delivery") return buildDeliveryNote(id, langOverride);
   if (kind === "quotation") {
     const q = await db.quotation.findUnique({
       where: { id },
@@ -165,4 +166,53 @@ export async function buildDocument(kind: DocKind, id: string, langOverride?: La
     }),
   );
   return { buffer, lang, clientId: c.clientId, title: `${tpl.title} ${ref}`, filename: `AMC-${safe(ref)}-${lang}.pdf` };
+}
+
+/** Delivery note (محضر تسليم) for a delivery project: delivered tasks (all tasks if none delivered yet), no prices. */
+async function buildDeliveryNote(projectId: string, langOverride?: Lang): Promise<BuiltDocument | null> {
+  const p = await loadDeliveryProject(projectId);
+  if (!p) return null;
+  const lang = langOverride ?? p.client.preferredLang;
+  const { company, logo } = await letterhead(lang);
+  const L = labels(lang, company.name);
+  const vars = await deliveryVars(p, lang);
+  const tpl = (await getDocumentTemplates("DELIVERY_NOTE"))[lang];
+  const buffer = await render(
+    createElement(DeliveryNotePdf, {
+      lang, company, logo, L,
+      title: fillPlaceholders(tpl.title, vars),
+      number: p.number,
+      date: String(vars.delivery_date),
+      client: lang === "ar" ? p.client.nameAr : p.client.nameEn,
+      contact: String(vars.contact_name ?? ""),
+      // Project no. is already in the header; the grid only adds the quotation / contract reference.
+      summary: vars.reference !== "—" ? [[L.reference, String(vars.reference)]] : [],
+      body: fillPlaceholders(tpl.body, vars),
+      items: deliveryItems(p).map((t, i) => ({
+        n: String(i + 1),
+        title: t.title,
+        scope: t.scope,
+        delivered: t.deliveredAt ? formatDate(t.deliveredAt, lang) : "—",
+      })),
+    }),
+  );
+  return { buffer, lang, clientId: p.clientId, title: `${tpl.title} ${p.number}`, filename: `${safe(p.number)}-delivery-${lang}.pdf` };
+}
+
+export async function loadDeliveryProject(id: string) {
+  return db.deliveryProject.findUnique({
+    where: { id },
+    include: {
+      client: { include: { contacts: true } },
+      quotation: { select: { number: true, version: true } },
+      contract: { select: { number: true } },
+      tasks: { where: { status: { not: "ON_HOLD" } }, orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], select: { title: true, scope: true, status: true, deliveredAt: true } },
+    },
+  });
+}
+
+/** Delivered tasks; when nothing is delivered yet (e.g. a draft note), all open tasks. */
+export function deliveryItems<T extends { status: string }>(p: { tasks: T[] }) {
+  const done = p.tasks.filter((t) => t.status === "DELIVERED" || t.status === "CLIENT_ACCEPTED");
+  return done.length ? done : p.tasks;
 }

@@ -28,6 +28,7 @@ const PLACEHOLDER_GROUPS: Record<string, (keyof typeof PLACEHOLDERS)[]> = {
   AMC_REMINDER: ["common", "contract", "amc"],
   AMC_OVERDUE: ["common", "contract", "amc"],
   REQUEST_UPDATE: ["common", "request"],
+  DELIVERY_NOTE: ["common", "delivery"],
 };
 
 export function TemplatesEditor({ templates }: { templates: TemplateEntry[] }) {

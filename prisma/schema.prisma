@@ -566,7 +566,7 @@ model Notification {
   id          String           @id @default(cuid())
   userId      String
   kind        NotificationKind
-  entityType  String // "amc" | "request"
+  entityType  String // "amc" | "request" | "task"
   entityId    String
   clientId    String?
   dueDate     DateTime         @db.Date
@@ -576,6 +576,8 @@ model Notification {
   readAt      DateTime?
   dismissedAt DateTime?
   emailedAt   DateTime?
+  /// Event details for task notifications: actorName, oldDate, newDate, reason, excerpt.
+  meta        Json?
   createdAt   DateTime         @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -642,22 +644,24 @@ enum DeliverySource {
 
 /// One project per approved quotation / activated contract.
 model DeliveryProject {
-  id          String                @id @default(cuid())
-  number      String                @unique
-  title       String
-  clientId    String
-  source      DeliverySource
-  quotationId String?
-  contractId  String?
-  status      DeliveryProjectStatus @default(ACTIVE)
-  startDate   DateTime?             @db.Date
-  targetDate  DateTime?             @db.Date // final delivery date
-  deliveredAt DateTime?
-  acceptedAt  DateTime?
-  notes       String?
-  createdById String?
-  createdAt   DateTime              @default(now())
-  updatedAt   DateTime              @updatedAt
+  id           String                @id @default(cuid())
+  number       String                @unique
+  title        String
+  clientId     String
+  source       DeliverySource
+  quotationId  String?
+  contractId   String?
+  status       DeliveryProjectStatus @default(ACTIVE)
+  startDate    DateTime?             @db.Date
+  targetDate   DateTime?             @db.Date // final delivery date
+  deliveredAt  DateTime?
+  acceptedAt   DateTime?
+  /// Attachment holding the client-signed delivery note (sets CLIENT_ACCEPTED).
+  signedNoteId String?
+  notes        String?
+  createdById  String?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
 
   client    Client         @relation(fields: [clientId], references: [id], onDelete: Restrict)
   quotation Quotation?     @relation(fields: [quotationId], references: [id], onDelete: SetNull)

@@ -13,7 +13,7 @@ export function BellMenu({ unread, items, canEmail }: { unread: number; items: N
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative" aria-label={`${t("bellTitle")}${unread ? ` (${unread})` : ""}`}>
+        <Button variant="ghost" size="icon" className="relative" aria-label={`${t("bellTitle")}${unread ? ` ${unread > 99 ? "99+" : unread}` : ""}`}>
           <Bell />
           {unread > 0 && (
             <span className="absolute -end-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-4 text-white">

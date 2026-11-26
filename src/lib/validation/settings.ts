@@ -41,6 +41,13 @@ export const notificationSettingsSchema = z.object({
     .transform((a) => [...new Set(a)].sort((x, y) => y - x)),
   notifyOverdueEveryDays: num({ min: 1, max: 90, int: true }),
   notifyByEmail: z.boolean(),
+  taskReminderDays: z
+    .array(num({ min: 0, max: 60, int: true }))
+    .min(1, "validation.required")
+    .max(10)
+    .transform((a) => [...new Set(a)].sort((x, y) => y - x)),
+  weeklyCapacityHours: num({ min: 1, max: 100, int: true }),
+  deliveryDigest: z.boolean(),
   emailProvider: z.enum(["RESEND", "SMTP"]),
   emailFrom: optStr(200),
   emailReplyTo: optEmail,

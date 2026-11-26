@@ -16,7 +16,7 @@ import { useServerAction } from "@/components/forms/use-action";
 import { saveNotificationSettingsAction } from "@/server/actions/settings";
 import { sendTestEmailAction } from "@/server/actions/email";
 
-type Values = { intervals: string; notifyOverdueEveryDays: string; notifyByEmail: boolean; emailProvider: "RESEND" | "SMTP"; emailFrom: string; emailReplyTo: string };
+type Values = { intervals: string; notifyOverdueEveryDays: string; notifyByEmail: boolean; taskReminderDays: string; weeklyCapacityHours: string; deliveryDigest: boolean; emailProvider: "RESEND" | "SMTP"; emailFrom: string; emailReplyTo: string };
 type Status = { provider: string; configured: boolean; missing: readonly string[]; devOutbox: boolean };
 
 export function NotificationsForm({ defaultValues, status }: { defaultValues: Values; status: Record<"RESEND" | "SMTP", Status> }) {
@@ -35,6 +35,9 @@ export function NotificationsForm({ defaultValues, status }: { defaultValues: Va
           notifyIntervals: v.intervals.split(/[,،\s]+/).filter(Boolean),
           notifyOverdueEveryDays: v.notifyOverdueEveryDays,
           notifyByEmail: v.notifyByEmail,
+          taskReminderDays: v.taskReminderDays.split(/[,،\s]+/).filter(Boolean),
+          weeklyCapacityHours: v.weeklyCapacityHours,
+          deliveryDigest: v.deliveryDigest,
           emailProvider: v.emailProvider,
           emailFrom: v.emailFrom,
           emailReplyTo: v.emailReplyTo,
@@ -44,7 +47,7 @@ export function NotificationsForm({ defaultValues, status }: { defaultValues: Va
         onSuccess: () => router.refresh(),
         onError: (r) =>
           Object.entries(r.fieldErrors ?? {}).forEach(([k, m]) =>
-            setError((k.startsWith("notifyIntervals") ? "intervals" : k) as keyof Values, { message: m }),
+            setError((k.startsWith("notifyIntervals") ? "intervals" : k.startsWith("taskReminderDays") ? "taskReminderDays" : k) as keyof Values, { message: m }),
           ),
       },
     ),
@@ -69,6 +72,33 @@ export function NotificationsForm({ defaultValues, status }: { defaultValues: Va
             render={({ field }) => (
               <label className="flex items-center gap-2 text-sm md:col-span-2">
                 <Switch checked={field.value} onCheckedChange={field.onChange} /> {t("settings.notifyByEmail")}
+              </label>
+            )}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("settings.deliverySection")}</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2">
+          <FormField label={t("settings.taskReminderDays")} htmlFor="taskReminderDays" hint={t("settings.taskReminderDaysHint")} error={formState.errors.taskReminderDays?.message}>
+            <Input id="taskReminderDays" dir="ltr" {...register("taskReminderDays")} />
+          </FormField>
+          <FormField label={t("settings.weeklyCapacityHours")} htmlFor="weeklyCapacityHours" hint={t("settings.weeklyCapacityHint")} error={formState.errors.weeklyCapacityHours?.message}>
+            <Input id="weeklyCapacityHours" dir="ltr" inputMode="numeric" {...register("weeklyCapacityHours")} />
+          </FormField>
+          <Controller
+            control={control}
+            name="deliveryDigest"
+            render={({ field }) => (
+              <label className="flex items-start gap-2 text-sm md:col-span-2">
+                <Switch checked={field.value} onCheckedChange={field.onChange} className="mt-0.5" />
+                <span>
+                  {t("settings.deliveryDigest")}
+                  <span className="block text-xs text-muted-foreground">{t("settings.deliveryDigestHint")}</span>
+                </span>
               </label>
             )}
           />

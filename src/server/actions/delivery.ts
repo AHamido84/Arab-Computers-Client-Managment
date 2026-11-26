@@ -230,15 +230,20 @@ export async function changeDueDateAction(id: string, input: unknown) {
     const before = await db.deliveryTask.findUniqueOrThrow({ where: { id } });
     const same = (before.dueDate?.getTime() ?? null) === (data.newDate?.getTime() ?? null);
     if (same) return;
-    await db.$transaction(async (tx) => {
+    const change = await db.$transaction(async (tx) => {
       await tx.deliveryTask.update({
         where: { id },
         data: { dueDate: data.newDate, originalDueDate: before.originalDueDate ?? before.dueDate ?? data.newDate },
       });
-      await tx.taskDueDateChange.create({ data: { taskId: id, changedById: user.id, oldDate: before.dueDate, newDate: data.newDate, reason: data.reason } });
+      const c = await tx.taskDueDateChange.create({ data: { taskId: id, changedById: user.id, oldDate: before.dueDate, newDate: data.newDate, reason: data.reason } });
       await audit(tx, { actorId: user.id, action: "UPDATE", entity: "DeliveryTask", entityId: id, before: { dueDate: before.dueDate }, after: { dueDate: data.newDate, reason: data.reason } });
+      return c;
     });
-    await notifyTaskEvent("TASK_DUE_CHANGED", id, { actorId: user.id });
+    await notifyTaskEvent("TASK_DUE_CHANGED", id, {
+      actorId: user.id,
+      ref: change.id,
+      meta: { oldDate: before.dueDate?.toISOString() ?? null, newDate: data.newDate?.toISOString() ?? null, reason: data.reason },
+    });
     revalidateDelivery(before.projectId, id);
   });
 }
@@ -326,8 +331,9 @@ export async function addCommentAction(taskId: string, body: string, mentionIds:
     const data = commentSchema.parse({ body });
     const mentions = [...new Set(mentionIds)].filter((m) => m !== user.id).slice(0, 20);
     const valid = mentions.length ? (await db.user.findMany({ where: { id: { in: mentions }, active: true }, select: { id: true } })).map((u) => u.id) : [];
-    await db.taskComment.create({ data: { taskId, authorId: user.id, body: data.body, mentions: valid } });
-    if (valid.length) await notifyTaskEvent("TASK_MENTION", taskId, { actorId: user.id, userIds: valid });
+    const comment = await db.taskComment.create({ data: { taskId, authorId: user.id, body: data.body, mentions: valid } });
+    if (valid.length)
+      await notifyTaskEvent("TASK_MENTION", taskId, { actorId: user.id, userIds: valid, ref: comment.id, meta: { excerpt: data.body.length > 140 ? `${data.body.slice(0, 140)}…` : data.body } });
     revalidateDelivery(acc.task.projectId, taskId);
   });
 }
@@ -361,5 +367,43 @@ export async function deleteTimeLogAction(logId: string) {
     if (l.userId !== user.id && !acc?.canManage) throw new DomainError("auth.forbidden");
     await db.taskTimeLog.delete({ where: { id: logId } });
     revalidateDelivery(l.task.projectId, l.taskId);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Handover
+// ---------------------------------------------------------------------------
+
+/**
+ * Record the client-signed delivery note: the uploaded attachment becomes the
+ * signed note and delivered tasks become CLIENT_ACCEPTED. The project becomes
+ * CLIENT_ACCEPTED only when no task is left open (otherwise: partial handover).
+ */
+export async function acceptProjectAction(projectId: string, attachmentId: string) {
+  return runAction(async () => {
+    const user = await requirePermission("manageDelivery");
+    const p = await db.deliveryProject.findUniqueOrThrow({ where: { id: projectId }, include: { tasks: { select: { status: true } } } });
+    const att = await db.attachment.findFirst({ where: { id: attachmentId, entityType: "DELIVERY_PROJECT", entityId: projectId } });
+    if (!att) throw new DomainError("errors.notFound");
+    if (p.status === "CANCELLED") throw new DomainError("delivery.cannotAcceptCancelled");
+    if (!p.tasks.some((t) => isDone(t.status))) throw new DomainError("delivery.nothingDelivered");
+    // Delivered tasks become accepted. The project itself is accepted only when
+    // nothing is left open — otherwise this is a partial handover and open tasks
+    // keep their reminders.
+    const full = p.tasks.every((t) => isDone(t.status) || t.status === "ON_HOLD");
+    await db.$transaction(async (tx) => {
+      const now = new Date();
+      const after = await tx.deliveryProject.update({
+        where: { id: projectId },
+        data: full
+          ? { status: "CLIENT_ACCEPTED", acceptedAt: now, deliveredAt: p.deliveredAt ?? now, signedNoteId: att.id }
+          : { signedNoteId: att.id },
+      });
+      await tx.deliveryTask.updateMany({ where: { projectId, status: "DELIVERED" }, data: { status: "CLIENT_ACCEPTED" } });
+      await audit(tx, { actorId: user.id, action: "UPDATE", entity: "DeliveryProject", entityId: projectId, before: p, after });
+      await activity(tx, { clientId: p.clientId, type: full ? "delivery.accepted" : "delivery.partiallyAccepted", summary: `${p.number} · ${p.title}`, refType: "delivery", refId: p.id, actorId: user.id });
+    });
+    revalidateDelivery(projectId);
+    return { full };
   });
 }

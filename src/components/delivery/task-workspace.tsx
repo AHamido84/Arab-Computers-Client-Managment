@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { AlertTriangle, CalendarSync, Loader2, Pencil, Plus, Send, Trash2 } from "lucide-react";
@@ -255,6 +255,7 @@ function Comments({ task, people, canComment, canManage, meId }: { task: TaskDTO
     [query, people, meId],
   );
 
+  const caret = useRef<number | null>(null);
   function onChange(v: string) {
     setBody(v);
     const pos = ref.current?.selectionStart ?? v.length;
@@ -266,10 +267,17 @@ function Comments({ task, people, canComment, canManage, meId }: { task: TaskDTO
     const pos = el?.selectionStart ?? body.length;
     const before = body.slice(0, pos).replace(/@([\p{L}\p{N}_.-]*)$/u, `@${p.name} `);
     const next = before + body.slice(pos);
+    caret.current = before.length;
     setBody(next);
     setQuery(null);
-    requestAnimationFrame(() => { el?.focus(); el?.setSelectionRange(before.length, before.length); });
+    el?.focus();
   }
+  // Place the caret right after the inserted mention before the next keystroke can land.
+  useLayoutEffect(() => {
+    if (caret.current == null || !ref.current) return;
+    ref.current.setSelectionRange(caret.current, caret.current);
+    caret.current = null;
+  }, [body]);
   const mentionIds = () => people.filter((p) => body.includes(`@${p.name}`)).map((p) => p.id);
   const name = (id: string) => people.find((p) => p.id === id)?.name;
 

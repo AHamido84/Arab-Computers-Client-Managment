@@ -24,9 +24,18 @@ export function NotificationItem({ n, compact, canEmail }: { n: NotificationView
   const router = useRouter();
   const { pending, run } = useServerAction();
   const Icon = ICON[n.kind] ?? Bell;
-  const overdue = n.daysBefore < 0;
+  const overdue = !n.event && n.daysBefore < 0;
   const days = Math.abs(n.daysBefore);
   const when = overdue ? t("overdueBy", { count: days }) : n.daysBefore === 0 ? t("dueToday") : t("dueIn", { count: days });
+  const m = n.meta ?? {};
+  const d = (x?: string | null) => (x ? f.date(x) : t("noDate"));
+  const who = m.actorName ?? "—";
+  const eventLine =
+    n.kind === "TASK_ASSIGNED" ? t("assignedBy", { name: who, date: d(n.dueDate) })
+    : n.kind === "TASK_DELIVERED" ? t("deliveredBy", { name: who })
+    : n.kind === "TASK_DUE_CHANGED" ? t("dueChangedBy", { name: who, from: d(m.oldDate), to: d(m.newDate), reason: m.reason ?? "" })
+    : n.kind === "TASK_MENTION" ? t("mentionedBy", { name: who, excerpt: m.excerpt ?? "" })
+    : "";
   const op = (o: "read" | "unread" | "dismiss" | "restore") => run(() => updateNotificationAction(n.id, o), { onSuccess: () => router.refresh() });
 
   return (
@@ -37,19 +46,23 @@ export function NotificationItem({ n, compact, canEmail }: { n: NotificationView
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex flex-wrap items-center gap-x-2 text-sm">
           <span className="font-medium">{t(`kind_${n.kind}`)}</span>
-          {!n.readAt && !n.dismissedAt && <span className="size-2 rounded-full bg-primary" aria-label={t("unread")} />}
+          {!n.readAt && !n.dismissedAt && <span role="img" className="size-2 rounded-full bg-primary" aria-label={t("unread")} />}
         </div>
         <Link href={n.href} className="block text-sm hover:underline" onClick={() => !n.readAt && op("read")}>
           {n.client ? f.name(n.client) : "—"} · <span dir="ltr">{n.reference}</span>
           {n.title ? ` — ${n.title}` : ""}
         </Link>
-        <p className={cn("text-xs", overdue ? "font-medium text-destructive" : "text-muted-foreground")}>
-          {f.date(n.dueDate)} · {when}
-          {n.amount != null && n.currency ? <span className="num"> · {f.money(n.amount, n.currency)}</span> : null}
-        </p>
+        {n.event ? (
+          <p className="text-xs text-muted-foreground" dir="auto">{eventLine}</p>
+        ) : (
+          <p className={cn("text-xs", overdue ? "font-medium text-destructive" : "text-muted-foreground")}>
+            {f.date(n.dueDate)} · {when}
+            {n.amount != null && n.currency ? <span className="num"> · {f.money(n.amount, n.currency)}</span> : null}
+          </p>
+        )}
         {!compact && (
           <div className="flex flex-wrap gap-1 pt-1">
-            {canEmail && n.client && (
+            {canEmail && n.client && n.entityType !== "task" && (
               <Button asChild size="xs" variant="default">
                 <Link href={`/emails/compose?kind=${n.entityType}&id=${n.entityId}`}>
                   <Mail /> {t("prepareEmail")}

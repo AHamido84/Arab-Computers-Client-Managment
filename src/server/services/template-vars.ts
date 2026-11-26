@@ -104,3 +104,27 @@ export async function amcVars(
     days_overdue: String(Math.max(0, -days)),
   };
 }
+
+export async function deliveryVars(
+  p: {
+    number: string;
+    title: string;
+    deliveredAt: Date | null;
+    quotation: { number: string; version: number } | null;
+    contract: { number: string } | null;
+    tasks: { status: string; deliveredAt: Date | null }[];
+    client: { nameAr: string; nameEn: string; contacts?: { name: string; isPrimary: boolean }[] };
+  },
+  lang: Lang,
+): Promise<TemplateVars> {
+  const delivered = p.tasks.filter((t) => t.status === "DELIVERED" || t.status === "CLIENT_ACCEPTED");
+  const last = delivered.reduce<Date | null>((m, t) => (t.deliveredAt && (!m || t.deliveredAt > m) ? t.deliveredAt : m), null);
+  return {
+    ...(await baseVars(lang, p.client)),
+    project_number: p.number,
+    project_title: p.title,
+    delivery_date: formatDate(p.deliveredAt ?? last ?? todayUTC(), lang),
+    items_count: (delivered.length || p.tasks.length),
+    reference: p.quotation ? (p.quotation.version > 1 ? `${p.quotation.number} v${p.quotation.version}` : p.quotation.number) : (p.contract?.number ?? "—"),
+  };
+}

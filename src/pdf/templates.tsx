@@ -236,3 +236,46 @@ export function QuotationPdf(d: QuotationDocData) {
     </LetterheadDocument>
   );
 }
+
+// ---------------------------------------------------------------------------
+
+export type DeliveryNoteDocData = Common & {
+  title: string;
+  number: string;
+  date: string;
+  client: string;
+  contact?: string | null;
+  summary: [string, string][];
+  body: string;
+  items: { n: string; title: string; scope?: string | null; delivered: string }[];
+};
+
+/** محضر تسليم — delivered items with signature blocks for both parties. */
+export function DeliveryNotePdf(d: DeliveryNoteDocData) {
+  const s = styles(d.lang);
+  return (
+    <LetterheadDocument lang={d.lang} title={`${d.title} ${d.number}`} company={d.company} logo={d.logo} labels={{ page: d.L.pageFn, taxNo: d.L.taxNo, cr: d.L.cr }}>
+      <Header lang={d.lang} title={d.title} meta={[[d.L.projectNo, d.number], [d.L.date, d.date]]} />
+      <ToBlock lang={d.lang} L={d.L} client={d.client} contact={d.contact} />
+      {d.summary.length > 0 && <KeyValueGrid lang={d.lang} items={d.summary} />}
+      <View style={{ marginTop: 10 }}>
+        <TemplateBody text={d.body} lang={d.lang} />
+      </View>
+      <DataTable
+        lang={d.lang}
+        cols={[
+          { label: "#", width: "7%", align: "center" },
+          { label: d.L.deliveredItem, width: "68%", align: "start" },
+          { label: d.L.deliveredOn, width: "25%", align: "start" },
+        ]}
+        rows={d.items.map((i) => [i.n, { main: i.title, sub: i.scope ?? undefined }, i.delivered])}
+      />
+      <View style={{ marginTop: 12 }} wrap={false}>
+        <Text style={[s.text, s.bold]}>{d.L.remarks}:</Text>
+        <View style={{ marginTop: 16, borderBottomWidth: 0.75, borderBottomColor: "#9AA7BD", borderStyle: "dotted" }} />
+        <View style={{ marginTop: 16, borderBottomWidth: 0.75, borderBottomColor: "#9AA7BD", borderStyle: "dotted" }} />
+      </View>
+      <Signatures lang={d.lang} left={d.L.deliveredBy} right={d.L.receivedBy} labels={{ signature: d.L.signature, name: d.L.name, stamp: d.L.stamp }} />
+    </LetterheadDocument>
+  );
+}
