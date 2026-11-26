@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
-import { AlertTriangle, Building2, FilePlus2, Pencil } from "lucide-react";
+import { AlertTriangle, Building2, FilePlus2, Mail, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -77,6 +77,13 @@ export default async function RequestPage({ params }: PageProps<"/requests/[id]"
                   <Pencil /> {t("common.edit")}
                 </Link>
               </Button>
+              {can(user.role, "sendEmail") && (
+                <Button asChild variant="outline">
+                  <Link href={`/emails/compose?kind=request&id=${r.id}`}>
+                    <Mail /> {t("documents.emailClient")}
+                  </Link>
+                </Button>
+              )}
               <Button asChild>
                 <Link href={`/quotations/new?clientId=${r.clientId}&requestIds=${r.id}`}>
                   <FilePlus2 /> {t("requests.createQuotation")}

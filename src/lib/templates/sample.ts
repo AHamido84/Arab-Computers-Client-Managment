@@ -8,6 +8,7 @@ export const SAMPLE_VARS = {
     amc_start_date: "10 يناير 2027", amc_increase_percent: "10", amc_method: "تراكمية على السنة السابقة", amc_year: "2",
     amc_amount: "49,500.00 ج.م.", due_date: "10 يناير 2028", days_remaining: "14", days_overdue: "5",
     quotation_number: "Q-2026-0012", quotation_version: "1", quotation_date: "26 نوفمبر 2026", valid_until: "26 ديسمبر 2026", quotation_total: "57,000.00 ج.م.",
+    request_number: "RQ-2026-0012", request_title: "ربط أجهزة البصمة", request_status: "قيد التنفيذ",
   },
   en: {
     company_name: "Arab Computers", company_phone: "+20 3 000 0000", company_email: "info@arab-computers.com", company_website: "arab-computers.com",
@@ -17,5 +18,6 @@ export const SAMPLE_VARS = {
     amc_start_date: "10 Jan 2027", amc_increase_percent: "10", amc_method: "compounded on the previous year", amc_year: "2",
     amc_amount: "EGP 49,500.00", due_date: "10 Jan 2028", days_remaining: "14", days_overdue: "5",
     quotation_number: "Q-2026-0012", quotation_version: "1", quotation_date: "26 Nov 2026", valid_until: "26 Dec 2026", quotation_total: "EGP 57,000.00",
+    request_number: "RQ-2026-0012", request_title: "Biometric attendance integration", request_status: "In progress",
   },
 } as const;

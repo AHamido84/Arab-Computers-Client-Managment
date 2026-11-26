@@ -3,9 +3,8 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { ComposeForm } from "@/components/email/compose-form";
 import { requirePagePermission } from "@/server/auth-guard";
-import { prepareEmail } from "@/server/services/compose";
+import { COMPOSE_KINDS, prepareEmail, type ComposeKind } from "@/server/services/compose";
 import { emailStatus } from "@/server/services/email";
-import { DOC_KINDS, type DocKind } from "@/server/services/documents";
 
 export async function generateMetadata() {
   return { title: (await getTranslations("email"))("compose") };
@@ -14,9 +13,9 @@ export async function generateMetadata() {
 export default async function ComposePage({ searchParams }: PageProps<"/emails/compose">) {
   await requirePagePermission("sendEmail");
   const sp = (await searchParams) as { kind?: string; id?: string; lang?: string };
-  if (!sp.id || !DOC_KINDS.includes(sp.kind as DocKind)) notFound();
+  if (!sp.id || !COMPOSE_KINDS.includes(sp.kind as ComposeKind)) notFound();
   const lang = sp.lang === "ar" || sp.lang === "en" ? sp.lang : undefined;
-  const [t, locale, draft, status] = await Promise.all([getTranslations("email"), getLocale(), prepareEmail(sp.kind as DocKind, sp.id, lang), emailStatus()]);
+  const [t, locale, draft, status] = await Promise.all([getTranslations("email"), getLocale(), prepareEmail(sp.kind as ComposeKind, sp.id, lang), emailStatus()]);
   if (!draft) notFound();
   return (
     <>

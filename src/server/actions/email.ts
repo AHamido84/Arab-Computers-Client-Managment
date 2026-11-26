@@ -26,7 +26,7 @@ export async function sendEmailAction(input: SendEmailInput) {
 
     let attachment: MailAttachment | null = null;
     let storedUrl: string | null = null;
-    if (data.attach) {
+    if (data.attach && data.kind !== "request") {
       const doc = await buildDocument(data.kind, data.id, data.lang);
       if (!doc) throw new DomainError("errors.notFound");
       attachment = { filename: doc.filename, content: doc.buffer, contentType: "application/pdf" };

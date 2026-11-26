@@ -51,7 +51,7 @@ export function ComposeForm({ draft, devOutbox }: { draft: ComposeDraft; devOutb
       cc: splitEmails(cc),
       subject,
       body,
-      attach,
+      attach: attach && draft.kind !== "request",
       markQuotationSent: markSent,
     });
     setPending(false);
@@ -142,6 +142,7 @@ export function ComposeForm({ draft, devOutbox }: { draft: ComposeDraft; devOutb
             </div>
           </CardContent>
         </Card>
+        {draft.kind !== "request" && (
         <Card>
           <CardHeader>
             <CardTitle>{t("email.attachment")}</CardTitle>
@@ -170,6 +171,7 @@ export function ComposeForm({ draft, devOutbox }: { draft: ComposeDraft; devOutb
             )}
           </CardContent>
         </Card>
+        )}
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => router.back()}>
             {t("common.cancel")}

@@ -46,9 +46,9 @@ function ToBlock({ lang, L, client, contact }: { lang: Lang; L: Labels; client: 
   );
 }
 
-type Col = { label: string; width: string; align: "start" | "end" | "center" };
+export type Col = { label: string; width: string; align: "start" | "end" | "center" };
 
-function DataTable({ lang, cols, rows }: { lang: Lang; cols: Col[]; rows: (string | { main: string; sub?: string })[][] }) {
+export function DataTable({ lang, cols, rows }: { lang: Lang; cols: Col[]; rows: (string | { main: string; sub?: string })[][] }) {
   const s = styles(lang);
   return (
     <View style={{ borderWidth: 0.75, borderColor: BRAND.border, borderRadius: 3 }}>

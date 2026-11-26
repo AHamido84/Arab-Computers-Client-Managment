@@ -3,13 +3,20 @@ import { db } from "@/lib/db";
 import { fillPlaceholders, type TemplateVars } from "@/lib/templates/render";
 import { DEFAULT_EMAIL_TEMPLATES } from "@/lib/templates/defaults";
 import type { EmailTemplateKind } from "@/generated/prisma/enums";
+import { createTranslator } from "next-intl";
+import { messagesFor } from "@/i18n/messages";
+import { formatDate } from "@/lib/format";
 import type { DocKind } from "./documents";
-import { amcVars, contractVars, quotationVars } from "./template-vars";
+import { amcVars, baseVars, contractVars, quotationVars } from "./template-vars";
+
+/** Kinds that can be emailed. "request" emails have no PDF attachment. */
+export type ComposeKind = DocKind | "request";
+export const COMPOSE_KINDS: ComposeKind[] = ["contract", "amc", "quotation", "request"];
 
 type Lang = "ar" | "en";
 
 export type ComposeDraft = {
-  kind: DocKind;
+  kind: ComposeKind;
   id: string;
   lang: Lang;
   templateKind: EmailTemplateKind;
@@ -29,7 +36,7 @@ async function emailTemplate(kind: EmailTemplateKind, lang: Lang) {
 }
 
 /** Build a ready-to-edit email (subject/body filled, recipients suggested). Nothing is sent here. */
-export async function prepareEmail(kind: DocKind, id: string, langOverride?: Lang): Promise<ComposeDraft | null> {
+export async function prepareEmail(kind: ComposeKind, id: string, langOverride?: Lang): Promise<ComposeDraft | null> {
   let client: ComposeDraft["client"] & { contacts: { name: string; email: string | null; isPrimary: boolean }[] };
   let vars: TemplateVars;
   let templateKind: EmailTemplateKind;
@@ -38,7 +45,23 @@ export async function prepareEmail(kind: DocKind, id: string, langOverride?: Lan
   let quotationStatus: string | undefined;
   let lang: Lang;
 
-  if (kind === "quotation") {
+  if (kind === "request") {
+    const r = await db.clientRequest.findUnique({ where: { id }, include: { client: { include: { contacts: true } } } });
+    if (!r) return null;
+    lang = langOverride ?? r.client.preferredLang;
+    client = r.client;
+    const t = createTranslator({ locale: lang, messages: messagesFor(lang), namespace: "requestStatus" });
+    vars = {
+      ...(await baseVars(lang, r.client)),
+      request_number: r.number,
+      request_title: r.title,
+      request_status: t(r.status),
+      due_date: r.dueDate ? formatDate(r.dueDate, lang) : "—",
+    };
+    templateKind = "REQUEST_UPDATE";
+    reference = r.number;
+    attachmentBase = "";
+  } else if (kind === "quotation") {
     const q = await db.quotation.findUnique({ where: { id }, include: { client: { include: { contacts: true } }, items: true } });
     if (!q) return null;
     lang = langOverride ?? q.lang;
@@ -88,7 +111,7 @@ export async function prepareEmail(kind: DocKind, id: string, langOverride?: Lan
     defaultTo: primary.length ? primary : contacts.slice(0, 1).map((c) => c.email),
     subject: fillPlaceholders(tpl.subject, vars),
     body: fillPlaceholders(tpl.body, vars),
-    attachmentName: `${attachmentBase.replace(/[^\p{L}\p{N}._-]+/gu, "-")}-${lang}.pdf`,
+    attachmentName: attachmentBase ? `${attachmentBase.replace(/[^\p{L}\p{N}._-]+/gu, "-")}-${lang}.pdf` : "",
     reference,
     quotationStatus,
   };

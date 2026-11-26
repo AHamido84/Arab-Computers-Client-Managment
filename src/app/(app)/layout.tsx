@@ -5,7 +5,7 @@ import { LanguageToggle } from "@/components/layout/language-toggle";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
 import { NotificationBell } from "@/components/layout/notification-bell";
-import { requireUser } from "@/server/auth-guard";
+import { can, requireUser } from "@/server/auth-guard";
 import { db } from "@/lib/db";
 import { getSettings } from "@/server/services/settings";
 import { FormatProvider } from "@/components/shared/format-provider";
@@ -28,7 +28,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <div className="flex-1" />
           <LanguageToggle />
           <ThemeToggle />
-          <NotificationBell unread={unread} />
+          <NotificationBell userId={user.id} unread={unread} canEmail={can(user.role, "sendEmail")} />
           <UserMenu name={user.name ?? ""} email={user.email ?? ""} role={user.role} />
         </header>
         <div className="flex-1 p-4 md:p-6">

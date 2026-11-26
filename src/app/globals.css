@@ -89,6 +89,7 @@
   --border: #dde3ec;
   --input: #d3dae6;
   --ring: var(--brand-cyan);
+  /* chart-1/chart-2 validated for CVD separation (light: surface #fff) */
   --chart-1: #1e4c9a;
   --chart-2: #00a8d0;
   --chart-3: #183878;
@@ -127,8 +128,8 @@
   --border: #22314f;
   --input: #2a3b5e;
   --ring: #36c3e6;
-  --chart-1: #4f86e0;
-  --chart-2: #36c3e6;
+  --chart-1: #4570d6;
+  --chart-2: #18a8c8;
   --chart-3: #8fb0ea;
   --chart-4: #6fcde3;
   --chart-5: #64748b;

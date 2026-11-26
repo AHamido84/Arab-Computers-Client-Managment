@@ -1,8 +1,8 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { todayUTC } from "@/lib/format";
+import { OPEN_REQUEST_STATUSES } from "@/lib/validation/request";
 
-const OPEN_REQUEST_STATUSES = ["NEW", "UNDER_STUDY", "QUOTED", "APPROVED", "IN_PROGRESS"] as const;
 
 function sumBy<T>(rows: T[], f: (r: T) => number) {
   return rows.reduce((s, r) => s + f(r), 0);
@@ -76,5 +76,50 @@ export async function getDashboardKpis() {
     overdueRequests,
     pendingQuotationsValue,
     upcoming,
+  };
+}
+
+/** Next 12 months of AMC in the default currency, split into collected vs still expected. */
+export async function getAmcByMonth(currency: string) {
+  const today = todayUTC();
+  const start = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
+  const end = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 12, 1));
+  const lines = await db.amcScheduleLine.findMany({
+    where: { dueDate: { gte: start, lt: end }, contract: { status: "ACTIVE", amcEnabled: true, currency } },
+    select: { dueDate: true, amount: true, status: true, paidAmount: true },
+  });
+  return Array.from({ length: 12 }, (_, i) => {
+    const m = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + i, 1));
+    const inMonth = lines.filter((l) => l.dueDate.getUTCFullYear() === m.getUTCFullYear() && l.dueDate.getUTCMonth() === m.getUTCMonth());
+    const collected = inMonth.filter((l) => l.status === "PAID").reduce((s, l) => s + Number(l.paidAmount ?? l.amount), 0);
+    const expected = inMonth.filter((l) => l.status !== "PAID").reduce((s, l) => s + Number(l.amount), 0);
+    return { month: m.toISOString(), collected: Math.round(collected), expected: Math.round(expected) };
+  });
+}
+
+export async function getOverdueLists(limit = 8) {
+  const today = todayUTC();
+  const [amc, requests, byStatus] = await Promise.all([
+    db.amcScheduleLine.findMany({
+      where: { status: { not: "PAID" }, dueDate: { lt: today }, contract: { status: "ACTIVE" } },
+      orderBy: { dueDate: "asc" },
+      take: limit,
+      select: {
+        id: true, yearIndex: true, dueDate: true, amount: true,
+        contract: { select: { id: true, number: true, currency: true, client: { select: { id: true, nameAr: true, nameEn: true } } } },
+      },
+    }),
+    db.clientRequest.findMany({
+      where: { status: { in: [...OPEN_REQUEST_STATUSES] }, dueDate: { lt: today } },
+      orderBy: { dueDate: "asc" },
+      take: limit,
+      select: { id: true, number: true, title: true, dueDate: true, priority: true, client: { select: { id: true, nameAr: true, nameEn: true } }, assignee: { select: { name: true } } },
+    }),
+    db.clientRequest.groupBy({ by: ["status"], where: { status: { in: [...OPEN_REQUEST_STATUSES] } }, _count: { _all: true } }),
+  ]);
+  return {
+    amc,
+    requests,
+    byStatus: OPEN_REQUEST_STATUSES.map((s) => ({ status: s, count: byStatus.find((b) => b.status === s)?._count._all ?? 0 })),
   };
 }

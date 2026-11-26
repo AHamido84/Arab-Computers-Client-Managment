@@ -7,7 +7,7 @@ const emailList = z
   .transform((a) => [...new Set(a)]);
 
 export const sendEmailSchema = z.object({
-  kind: z.enum(["contract", "amc", "quotation"]),
+  kind: z.enum(["contract", "amc", "quotation", "request"]),
   id: z.string().min(1),
   lang: z.enum(["ar", "en"]),
   to: emailList.refine((a) => a.length > 0, "email.needRecipient"),

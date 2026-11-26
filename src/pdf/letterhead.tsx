@@ -48,7 +48,9 @@ export function LetterheadDocument({
   logo,
   labels,
   children,
+  orientation = "portrait",
 }: {
+  orientation?: "portrait" | "landscape";
   lang: Lang;
   title: string;
   company: Company;
@@ -63,7 +65,7 @@ export function LetterheadDocument({
     .join("   •   ");
   return (
     <Document title={title} author={company.name} creator={company.name} producer={company.name} language={lang}>
-      <Page size="A4" style={s.page} wrap>
+      <Page size="A4" orientation={orientation} style={s.page} wrap>
         {/* Header */}
         <View fixed style={{ position: "absolute", top: 26, left: 42, right: 42 }}>
           <View style={[s.row, { justifyContent: "space-between", alignItems: "center" }]}>

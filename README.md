@@ -162,6 +162,20 @@ Implemented in `src/lib/amc/engine.ts` and covered by `tests/amc-engine.test.ts`
 - **Paid years are locked** and never recalculated.
 - Due dates are one year apart, starting at the AMC start date (default: contract date + 1 year).
 
+### Notifications
+
+- The daily job creates alerts for **upcoming AMC renewals, overdue AMC payments, requests due soon and overdue requests**.
+  - Alerts go to the client's account manager (or the request's assignee) **and all admins**.
+  - Intervals are set in *Settings → Notifications & email*, e.g. 30/14/3 days before, plus overdue alerts repeated every N days.
+  - Re-running the job never duplicates alerts: each (user, trigger) pair is unique.
+- Alerts appear in the header bell and on *Notifications* (read/unread, dismiss/restore, mark all read). Each one has **Prepare email to client**, which opens the reviewed compose form.
+- If enabled, each recipient also gets **one digest email per run** in their own language. Admins can trigger the same job with **Run daily check now**.
+- The scheduling rules live in `src/lib/notifications/schedule.ts` and are covered by `tests/notifications.test.ts`.
+
+### Reports
+
+*Reports* has four tabs: AMC schedule, Requests (by status, by client, details), Quotations (latest versions, acceptance rate) and Client statement. Each has filters and exports to **PDF** (landscape, on the letterhead) and **Excel** (summary sheet plus one sheet per table, with numeric money and date columns).
+
 ### Documents & email
 
 - **PDFs** (`/api/pdf/{contract|amc|quotation}/{id}?lang=ar|en`) are rendered on the server with `@react-pdf/renderer` on the company letterhead: logo, address, footer and page numbers. They default to the client's preferred language.

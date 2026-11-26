@@ -11,6 +11,7 @@ export const PLACEHOLDERS = {
   contract: ["contract_number", "contract_date", "contract_start_date", "contract_value", "currency", "products", "payment_terms", "amc_percent", "amc_start_date", "amc_increase_percent", "amc_method"],
   amc: ["contract_number", "products", "amc_year", "amc_amount", "due_date", "days_remaining", "days_overdue", "currency"],
   quotation: ["quotation_number", "quotation_version", "quotation_date", "valid_until", "quotation_total", "currency"],
+  request: ["request_number", "request_title", "request_status", "due_date"],
 } as const;
 
 type Lang = "ar" | "en";
@@ -236,19 +237,31 @@ Best regards,
   },
   REQUEST_UPDATE: {
     en: {
-      subject: "Update on your request — {{company_name}}",
+      subject: "Update on your request {{request_number}} — {{company_name}}",
       body: `Dear {{contact_name}},
 
-We would like to update you on the status of your request.
+We would like to update you on your request "{{request_title}}" ({{request_number}}).
+
+Current status: {{request_status}}
+Target date: {{due_date}}
+
+Please let us know if you have any questions.
 
 Best regards,
 {{company_name}}`,
     },
     ar: {
-      subject: "تحديث بشأن طلبكم — {{company_name}}",
+      subject: "تحديث بشأن طلبكم {{request_number}} — {{company_name}}",
       body: `السيد/ة {{contact_name}} المحترم/ة،
 
-نود إفادتكم بآخر مستجدات طلبكم.
+تحية طيبة وبعد،
+
+نود إفادتكم بآخر مستجدات طلبكم "{{request_title}}" (رقم {{request_number}}).
+
+الحالة الحالية: {{request_status}}
+التاريخ المستهدف: {{due_date}}
+
+لا تترددوا في التواصل معنا لأي استفسار.
 
 مع خالص التحية،
 {{company_name}}`,
