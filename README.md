@@ -85,13 +85,9 @@ Open http://localhost:3000.
      - SMTP: set `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER` and `SMTP_PASSWORD`, then choose SMTP in *Settings → Email* inside the app.
    - `SEED_ADMIN_PASSWORD`: a strong password for the first admin
 6. **Deploy.** The `vercel-build` script runs `prisma generate`, then `prisma migrate deploy`, then `next build`, so migrations apply on every deploy.
-7. **Seed once** from your machine, against the production database:
-   ```bash
-   npx vercel env pull .env.production.local
-   ```
-   ```bash
-   DOTENV_CONFIG_PATH=.env.production.local npm run db:seed
-   ```
+7. **Seed once.** Pick one option:
+   - **On Vercel (works with Sensitive database variables):** add `SEED_ON_BUILD` = `1` under Environment Variables, then redeploy. The build runs `scripts/seed-if-enabled.mjs`. **Then delete `SEED_ON_BUILD`**, so removed demo users aren't recreated by later builds.
+   - **From your machine:** copy the database URL from the database's dashboard into `.env` as `DATABASE_URL`, then run `npm run db:seed`. Note that `vercel env pull` doesn't download Sensitive variables.
 8. **Sign in** as `admin@arab-computers.com`. Then update company info in *Settings*, create real users, and remove or disable the demo users.
 9. **Custom domain** (optional): *Settings → Domains*.
 
