@@ -81,3 +81,10 @@ export function todayUTC(now = new Date()): Date {
 export function daysBetween(from: Date, to: Date) {
   return Math.round((to.getTime() - from.getTime()) / 86_400_000);
 }
+
+/** Full currency name for document text (e.g. "الجنيه المصري" / "Egyptian Pounds (EGP)"). */
+export function currencyName(currency: string, locale: AppLocale) {
+  const ar: Record<string, string> = { EGP: "الجنيه المصري", USD: "الدولار الأمريكي", EUR: "اليورو", SAR: "الريال السعودي", AED: "الدرهم الإماراتي", KWD: "الدينار الكويتي", QAR: "الريال القطري" };
+  const en: Record<string, string> = { EGP: "Egyptian Pounds (EGP)", USD: "US Dollars (USD)", EUR: "Euros (EUR)", SAR: "Saudi Riyals (SAR)", AED: "UAE Dirhams (AED)", KWD: "Kuwaiti Dinars (KWD)", QAR: "Qatari Riyals (QAR)" };
+  return (locale === "ar" ? ar : en)[currency] ?? currency;
+}

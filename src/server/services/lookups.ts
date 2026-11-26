@@ -27,3 +27,11 @@ export async function getClientOptions() {
     select: { id: true, code: true, nameAr: true, nameEn: true, preferredLang: true },
   });
 }
+
+export async function getContractOptions() {
+  return db.contract.findMany({
+    where: { status: { not: "CANCELLED" } },
+    orderBy: { number: "desc" },
+    select: { id: true, number: true, clientId: true },
+  });
+}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
-import { FilePlus2, Globe, Mail, MapPin, MessageCircle, Pencil, Phone, Star, UserRound } from "lucide-react";
+import { ClipboardPlus, FilePlus2, Globe, Mail, MapPin, MessageCircle, Pencil, Phone, Star, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -92,6 +92,11 @@ export default async function ClientProfilePage({ params, searchParams }: PagePr
               <Button asChild variant="outline">
                 <Link href={`/clients/${c.id}/edit`}>
                   <Pencil /> {t("common.edit")}
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href={`/requests/new?clientId=${c.id}`}>
+                  <ClipboardPlus /> {t("requests.new")}
                 </Link>
               </Button>
               <Button asChild>
@@ -277,7 +282,11 @@ export default async function ClientProfilePage({ params, searchParams }: PagePr
                       <TableCell dir="ltr" className="text-muted-foreground">
                         {r.number}
                       </TableCell>
-                      <TableCell className="font-medium">{r.title}</TableCell>
+                      <TableCell className="font-medium">
+                        <Link href={`/requests/${r.id}`} className="hover:underline">
+                          {r.title}
+                        </Link>
+                      </TableCell>
                       <TableCell>
                         <StatusBadge color={STATUS_COLOR[r.status]}>{t(`requestStatus.${r.status}`)}</StatusBadge>
                       </TableCell>
@@ -313,8 +322,10 @@ export default async function ClientProfilePage({ params, searchParams }: PagePr
                 )}
                 {c.quotations.map((q) => (
                   <TableRow key={q.id}>
-                    <TableCell dir="ltr" className="text-muted-foreground">
-                      {q.number} v{q.version}
+                    <TableCell dir="ltr">
+                      <Link href={`/quotations/${q.id}`} className="font-medium hover:underline">
+                        {q.number} v{q.version}
+                      </Link>
                     </TableCell>
                     <TableCell className="font-medium">{q.title ?? "—"}</TableCell>
                     <TableCell>

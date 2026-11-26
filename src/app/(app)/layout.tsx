@@ -31,11 +31,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <NotificationBell unread={unread} />
           <UserMenu name={user.name ?? ""} email={user.email ?? ""} role={user.role} />
         </header>
-        <main className="flex-1 p-4 md:p-6">
+        <div className="flex-1 p-4 md:p-6">
           <FormatProvider digits={settings.arabicDigits} currency={settings.defaultCurrency}>
             {children}
           </FormatProvider>
-        </main>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

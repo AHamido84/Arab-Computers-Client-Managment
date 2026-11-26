@@ -111,12 +111,12 @@ Further to your request, we are pleased to submit our quotation no. {{quotation_
 };
 
 export const DEFAULT_QUOTATION_TERMS: Record<Lang, string> = {
-  en: `1. Prices are in {{currency}} and exclude any items not explicitly listed.
+  en: `1. All prices are in {{currency}} and exclude any items not explicitly listed.
 2. 50% advance payment upon approval; balance upon delivery.
 3. Delivery dates start from receipt of the advance payment and approved requirements.
 4. Any change in scope after approval will be quoted separately.
 5. This quotation is valid until {{valid_until}}.`,
-  ar: `1. الأسعار بـ{{currency}} ولا تشمل أي بنود غير مذكورة صراحةً.
+  ar: `1. جميع الأسعار بعملة {{currency}} ولا تشمل أي بنود غير مذكورة صراحةً.
 2. دفعة مقدمة 50٪ عند الموافقة، والباقي عند التسليم.
 3. تبدأ مواعيد التسليم من تاريخ استلام الدفعة المقدمة واعتماد المتطلبات.
 4. أي تعديل على نطاق العمل بعد الاعتماد يتم تسعيره بشكل منفصل.
