@@ -13,7 +13,7 @@
     "db:seed": "prisma db seed",
     "postinstall": "prisma generate",
     "typecheck": "tsc --noEmit",
-    "vercel-build": "prisma generate && prisma migrate deploy && node scripts/seed-if-enabled.mjs && next build",
+    "vercel-build": "prisma generate && node scripts/migrate-deploy.mjs && node scripts/seed-if-enabled.mjs && next build",
     "db:reset": "prisma migrate reset --force"
   },
   "dependencies": {
