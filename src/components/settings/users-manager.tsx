@@ -17,9 +17,9 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { useFmt } from "@/components/shared/format-provider";
 import { adminSetPasswordAction, createUserAction, updateUserAction } from "@/server/actions/users";
 
-export type UserRow = { id: string; name: string; email: string; role: "ADMIN" | "ACCOUNT_MANAGER" | "VIEWER"; locale: "ar" | "en"; active: boolean; lastLoginAt: string | null };
+export type UserRow = { id: string; name: string; email: string; role: "ADMIN" | "ACCOUNT_MANAGER" | "VIEWER" | "TEAM_MEMBER"; locale: "ar" | "en"; active: boolean; lastLoginAt: string | null };
 type Form = { name: string; email: string; role: UserRow["role"]; locale: "ar" | "en"; active: boolean; password: string };
-const ROLES = ["ADMIN", "ACCOUNT_MANAGER", "VIEWER"] as const;
+const ROLES = ["ADMIN", "ACCOUNT_MANAGER", "TEAM_MEMBER", "VIEWER"] as const;
 
 export function UsersManager({ users, meId }: { users: UserRow[]; meId: string }) {
   const t = useTranslations();
@@ -56,7 +56,7 @@ export function UsersManager({ users, meId }: { users: UserRow[]; meId: string }
                   </TableCell>
                   <TableCell dir="ltr">{u.email}</TableCell>
                   <TableCell>
-                    <StatusBadge color={u.role === "ADMIN" ? "violet" : u.role === "ACCOUNT_MANAGER" ? "blue" : "slate"}>{t(`roles.${u.role}`)}</StatusBadge>
+                    <StatusBadge color={{ ADMIN: "violet", ACCOUNT_MANAGER: "blue", TEAM_MEMBER: "sky", VIEWER: "slate" }[u.role]}>{t(`roles.${u.role}`)}</StatusBadge>
                   </TableCell>
                   <TableCell>{t(`languages.${u.locale}`)}</TableCell>
                   <TableCell>{u.active ? t("users.active") : t("users.inactive")}</TableCell>

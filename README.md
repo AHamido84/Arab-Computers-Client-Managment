@@ -56,6 +56,7 @@ Open http://localhost:3000.
 | manager@arab-computers.com | `Manager@12345` | Account manager |
 | karim@arab-computers.com | `Manager@12345` | Account manager |
 | viewer@arab-computers.com | `Viewer@12345` | Viewer |
+| dev@arab-computers.com | `Team@12345` | Team member |
 
 > **Change these passwords (or delete the demo users) before going live.** See the go-live checklist below.
 

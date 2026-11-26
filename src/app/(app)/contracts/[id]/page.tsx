@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
-import { Building2, Pencil } from "lucide-react";
+import { Building2, FolderKanban, Pencil } from "lucide-react";
+import { db } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/shared/page-header";
@@ -11,7 +12,7 @@ import { DocumentMenu } from "@/components/shared/document-menu";
 import { AmcScheduleGrid } from "@/components/contracts/amc-schedule-grid";
 import { AttachmentsPanel } from "@/components/attachments/attachments-panel";
 import { toAttachmentItems } from "@/components/attachments/types";
-import { can, requireUser } from "@/server/auth-guard";
+import { can, requirePagePermission } from "@/server/auth-guard";
 import { getContract, serializeAmcLines } from "@/server/services/contracts";
 import { listAttachments } from "@/server/services/attachments";
 import { getSettings } from "@/server/services/settings";
@@ -27,7 +28,7 @@ export async function generateMetadata({ params }: PageProps<"/contracts/[id]">)
 }
 
 export default async function ContractPage({ params }: PageProps<"/contracts/[id]">) {
-  const user = await requireUser();
+  const user = await requirePagePermission("read");
   const { id } = await params;
   const [t, locale, c, files, settings] = await Promise.all([
     getTranslations(),
@@ -42,6 +43,7 @@ export default async function ContractPage({ params }: PageProps<"/contracts/[id
   const canWrite = can(user.role, "write");
   const clientName = locale === "ar" ? c.client.nameAr : c.client.nameEn;
   const amcStart = c.amcStartDate ?? defaultAmcStartDate(c.contractDate);
+  const project = await db.deliveryProject.findFirst({ where: { contractId: c.id }, select: { id: true } });
 
   return (
     <>
@@ -61,6 +63,13 @@ export default async function ContractPage({ params }: PageProps<"/contracts/[id
         actions={
           <>
             <DocumentMenu kind="contract" id={c.id} defaultLang={c.client.preferredLang} canEmail={can(user.role, "sendEmail")} />
+            {c.status === "ACTIVE" && (project || can(user.role, "manageDelivery")) && (
+              <Button asChild variant={project ? "outline" : "default"}>
+                <Link href={project ? `/delivery/${project.id}` : `/delivery/new?contractId=${c.id}`}>
+                  <FolderKanban /> {project ? t("delivery.viewProject") : t("delivery.createFromQuotation")}
+                </Link>
+              </Button>
+            )}
             {canWrite && (
             <>
               <Button asChild variant="outline">

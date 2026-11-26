@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ContractsTable } from "@/components/contracts/contracts-table";
-import { can, requireUser } from "@/server/auth-guard";
+import { can, requirePagePermission } from "@/server/auth-guard";
 import { listContracts } from "@/server/services/contracts";
 import { getLookups } from "@/server/services/lookups";
 
@@ -14,7 +14,7 @@ export async function generateMetadata() {
 }
 
 export default async function ContractsPage() {
-  const user = await requireUser();
+  const user = await requirePagePermission("read");
   const [t, rows, products] = await Promise.all([getTranslations(), listContracts(), getLookups("PRODUCT", true)]);
   const newButton = can(user.role, "write") && (
     <Button asChild>

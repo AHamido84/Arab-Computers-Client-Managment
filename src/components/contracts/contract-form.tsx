@@ -52,7 +52,9 @@ export function ContractForm({
   clients,
   products,
   paymentTerms,
+  canManageDelivery = false,
 }: {
+  canManageDelivery?: boolean;
   contractId?: string;
   defaultValues: ContractFormValues;
   clients: { id: string; nameAr: string; nameEn: string; code: string }[];
@@ -87,7 +89,8 @@ export function ContractForm({
     run(() => (contractId ? updateContractAction(contractId, values) : createContractAction(values)), {
       success: contractId ? "contracts.updated" : "contracts.created",
       onSuccess: (d) => {
-        router.push(`/contracts/${d.id}`);
+        // Newly active contract → offer to set up delivery (skipped if a project exists or you lack permission).
+        router.push(d.activated && canManageDelivery ? `/delivery/new?contractId=${d.id}` : `/contracts/${d.id}`);
         router.refresh();
       },
       onError: (r) => Object.entries(r.fieldErrors ?? {}).forEach(([k, m]) => setError(k as keyof ContractFormValues, { message: m })),

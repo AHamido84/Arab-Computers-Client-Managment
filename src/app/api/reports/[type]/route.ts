@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import ExcelJS from "exceljs";
 import { createTranslator } from "next-intl";
-import { getCurrentUser } from "@/server/auth-guard";
+import { can, getCurrentUser } from "@/server/auth-guard";
 import { buildReport, formatCell, parseFilters, REPORT_TYPES, type ReportResult, type ReportType } from "@/server/services/reports";
 import { getSettings } from "@/server/services/settings";
 import { readFileBuffer } from "@/server/services/storage";
@@ -17,6 +17,7 @@ import { ReportPdf } from "@/pdf/report";
 export async function GET(req: Request, ctx: RouteContext<"/api/reports/[type]">) {
   const user = await getCurrentUser();
   if (!user) return new NextResponse("Unauthorized", { status: 401 });
+  if (!can(user.role, "read")) return new NextResponse("Forbidden", { status: 403 });
   const { type } = await ctx.params;
   if (!REPORT_TYPES.includes(type as ReportType)) return new NextResponse("Not found", { status: 404 });
   const url = new URL(req.url);

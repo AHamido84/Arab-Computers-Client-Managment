@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, Bell, CalendarClock, Check, ClipboardList, Eye, EyeOff, Mail, RotateCcw, X } from "lucide-react";
+import { AlertTriangle, AtSign, Bell, CalendarClock, CalendarSync, Check, CircleCheckBig, ClipboardList, Eye, EyeOff, ListTodo, Mail, RotateCcw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFmt } from "@/components/shared/format-provider";
 import { useServerAction } from "@/components/forms/use-action";
@@ -11,7 +11,11 @@ import { updateNotificationAction } from "@/server/actions/notifications";
 import type { NotificationView } from "@/server/services/notifications";
 import { cn } from "@/lib/utils";
 
-const ICON = { AMC_UPCOMING: CalendarClock, AMC_OVERDUE: AlertTriangle, REQUEST_DUE: ClipboardList, REQUEST_OVERDUE: AlertTriangle } as const;
+const ICON = {
+  AMC_UPCOMING: CalendarClock, AMC_OVERDUE: AlertTriangle, REQUEST_DUE: ClipboardList, REQUEST_OVERDUE: AlertTriangle,
+  TASK_ASSIGNED: ListTodo, TASK_DUE: CalendarClock, TASK_OVERDUE: AlertTriangle, TASK_DELIVERED: CircleCheckBig,
+  TASK_DUE_CHANGED: CalendarSync, TASK_MENTION: AtSign,
+} as const;
 
 /** One notification row with read / dismiss / prepare-email actions. */
 export function NotificationItem({ n, compact, canEmail }: { n: NotificationView; compact?: boolean; canEmail: boolean }) {

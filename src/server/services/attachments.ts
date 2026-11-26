@@ -13,6 +13,10 @@ export async function clientIdFor(entityType: AttachmentEntity, entityId: string
       return (await db.clientRequest.findUnique({ where: { id: entityId }, select: { clientId: true } }))?.clientId ?? null;
     case "QUOTATION":
       return (await db.quotation.findUnique({ where: { id: entityId }, select: { clientId: true } }))?.clientId ?? null;
+    case "DELIVERY_PROJECT":
+      return (await db.deliveryProject.findUnique({ where: { id: entityId }, select: { clientId: true } }))?.clientId ?? null;
+    case "DELIVERY_TASK":
+      return (await db.deliveryTask.findUnique({ where: { id: entityId }, select: { project: { select: { clientId: true } } } }))?.project.clientId ?? null;
     default:
       return null;
   }

@@ -8,6 +8,11 @@ import type { Role } from "@/generated/prisma/enums";
  *  - ADMIN: everything
  *  - ACCOUNT_MANAGER: manage business data and send emails; no settings/users
  *  - VIEWER: read-only
+ *  - TEAM_MEMBER: only their own delivery tasks (no clients, contracts, prices…)
+ *
+ *  "read"           — business data (clients, contracts, requests, quotations, reports)
+ *  "tasks"          — work on delivery tasks they are assigned to / watch
+ *  "manageDelivery" — create delivery projects, assign people, change any due date
  */
 export type Permission =
   | "read"
@@ -15,12 +20,15 @@ export type Permission =
   | "delete"
   | "sendEmail"
   | "manageSettings"
-  | "manageUsers";
+  | "manageUsers"
+  | "tasks"
+  | "manageDelivery";
 
 const matrix: Record<Role, Permission[]> = {
-  ADMIN: ["read", "write", "delete", "sendEmail", "manageSettings", "manageUsers"],
-  ACCOUNT_MANAGER: ["read", "write", "delete", "sendEmail"],
+  ADMIN: ["read", "write", "delete", "sendEmail", "manageSettings", "manageUsers", "tasks", "manageDelivery"],
+  ACCOUNT_MANAGER: ["read", "write", "delete", "sendEmail", "tasks", "manageDelivery"],
   VIEWER: ["read"],
+  TEAM_MEMBER: ["tasks"],
 };
 
 export const can = (role: Role | undefined, p: Permission) => !!role && matrix[role].includes(p);

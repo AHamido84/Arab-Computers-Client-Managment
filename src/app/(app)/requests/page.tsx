@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { RequestsTable } from "@/components/requests/requests-table";
 import { RequestsKanban } from "@/components/requests/requests-kanban";
-import { can, requireUser } from "@/server/auth-guard";
+import { can, requirePagePermission } from "@/server/auth-guard";
 import { listRequests } from "@/server/services/requests";
 import { getAssignableUsers, getClientOptions } from "@/server/services/lookups";
 import { cn } from "@/lib/utils";
@@ -16,7 +16,7 @@ export async function generateMetadata() {
 }
 
 export default async function RequestsPage({ searchParams }: PageProps<"/requests">) {
-  const user = await requireUser();
+  const user = await requirePagePermission("read");
   const { view } = (await searchParams) as { view?: string };
   const kanban = view === "kanban";
   const [t, rows, users, clients] = await Promise.all([getTranslations(), listRequests(), getAssignableUsers(), getClientOptions()]);

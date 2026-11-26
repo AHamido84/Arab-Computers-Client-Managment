@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser } from "@/server/auth-guard";
+import { can, getCurrentUser } from "@/server/auth-guard";
 import { readFile } from "@/server/services/storage";
 
 /** Download the exact PDF that was attached to a logged email. */
 export async function GET(_req: Request, ctx: RouteContext<"/api/emails/[id]/attachment">) {
-  if (!(await getCurrentUser())) return new NextResponse("Unauthorized", { status: 401 });
+  const user = await getCurrentUser();
+  if (!user) return new NextResponse("Unauthorized", { status: 401 });
+  if (!can(user.role, "read")) return new NextResponse("Forbidden", { status: 403 });
   const { id } = await ctx.params;
   const log = await db.emailLog.findUnique({ where: { id } });
   if (!log?.attachmentUrl) return new NextResponse("Not found", { status: 404 });

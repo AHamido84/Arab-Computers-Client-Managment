@@ -38,7 +38,7 @@ export async function createContractAction(input: ContractInput) {
       return created;
     });
     revalidateContract(c.id, c.clientId);
-    return { id: c.id };
+    return { id: c.id, activated: c.status === "ACTIVE" };
   });
 }
 
@@ -61,10 +61,10 @@ export async function updateContractAction(id: string, input: ContractInput) {
       await audit(tx, { actorId: user.id, action: "UPDATE", entity: "Contract", entityId: id, before, after: updated });
       const type = before.status !== updated.status ? "contract.statusChanged" : "contract.updated";
       await activity(tx, { clientId: updated.clientId, type, summary: `${updated.number} · ${updated.status}`, refType: "contract", refId: id, actorId: user.id });
-      return updated;
+      return { ...updated, wasActive: before.status === "ACTIVE" };
     });
     revalidateContract(id, after.clientId);
-    return { id };
+    return { id, activated: after.status === "ACTIVE" && !after.wasActive };
   });
 }
 

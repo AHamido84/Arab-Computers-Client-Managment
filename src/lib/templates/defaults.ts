@@ -12,11 +12,12 @@ export const PLACEHOLDERS = {
   amc: ["contract_number", "products", "amc_year", "amc_amount", "due_date", "days_remaining", "days_overdue", "currency"],
   quotation: ["quotation_number", "quotation_version", "quotation_date", "valid_until", "quotation_total", "currency"],
   request: ["request_number", "request_title", "request_status", "due_date"],
+  delivery: ["project_number", "project_title", "delivery_date", "items_count", "reference"],
 } as const;
 
 type Lang = "ar" | "en";
-type DocKind = "CONTRACT" | "AMC_RENEWAL" | "QUOTATION";
-type MailKind = "AMC_REMINDER" | "AMC_OVERDUE" | "QUOTATION" | "CONTRACT" | "REQUEST_UPDATE";
+type DocKind = "CONTRACT" | "AMC_RENEWAL" | "QUOTATION" | "DELIVERY_NOTE";
+type MailKind = "AMC_REMINDER" | "AMC_OVERDUE" | "QUOTATION" | "CONTRACT" | "REQUEST_UPDATE" | "DELIVERY_NOTE";
 
 export const DEFAULT_DOCUMENT_TEMPLATES: Record<DocKind, Record<Lang, { title: string; body: string }>> = {
   CONTRACT: {
@@ -107,6 +108,26 @@ Further to your request, we are pleased to submit our quotation no. {{quotation_
       body: `السيد/ة {{contact_name}} المحترم/ة،
 
 بالإشارة إلى طلبكم، يسعدنا أن نقدم لكم عرض السعر رقم {{quotation_number}} للبنود الموضحة أدناه، ويسري هذا العرض حتى {{valid_until}}.`,
+    },
+  },
+  DELIVERY_NOTE: {
+    en: {
+      title: "Delivery Note",
+      body: `On {{delivery_date}}, {{company_name}} delivered to {{client_name}} the items listed below for project {{project_number}} — {{project_title}} (ref. {{reference}}).
+
+The client confirms receipt of the delivered scope and that it was tested and accepted, subject to any remarks noted below. Signing this note starts the warranty period and the annual maintenance terms agreed in the contract.
+
+Remarks:
+…………………………………………………………………………`,
+    },
+    ar: {
+      title: "محضر تسليم",
+      body: `إنه في يوم {{delivery_date}} قامت {{company_name}} بتسليم {{client_name}} البنود الموضحة أدناه الخاصة بمشروع رقم {{project_number}} — {{project_title}} (المرجع {{reference}}).
+
+ويقر العميل باستلام نطاق العمل المسلَّم واختباره وقبوله، مع مراعاة أي ملاحظات مدونة أدناه، ويبدأ بالتوقيع على هذا المحضر سريان فترة الضمان وشروط الصيانة السنوية المتفق عليها في العقد.
+
+ملاحظات:
+…………………………………………………………………………`,
     },
   },
 };
@@ -262,6 +283,32 @@ Best regards,
 التاريخ المستهدف: {{due_date}}
 
 لا تترددوا في التواصل معنا لأي استفسار.
+
+مع خالص التحية،
+{{company_name}}`,
+    },
+  },
+  DELIVERY_NOTE: {
+    en: {
+      subject: "Delivery note — {{project_number}} — {{company_name}}",
+      body: `Dear {{contact_name}},
+
+We are pleased to inform you that all items of project {{project_number}} — {{project_title}} ({{items_count}} items) have been delivered.
+
+Please find attached the delivery note. Kindly review it, sign and stamp it, and send us a copy.
+
+Best regards,
+{{company_name}}`,
+    },
+    ar: {
+      subject: "محضر تسليم — {{project_number}} — {{company_name}}",
+      body: `السيد/ة {{contact_name}} المحترم/ة،
+
+تحية طيبة وبعد،
+
+يسعدنا إفادتكم بأنه تم تسليم جميع بنود المشروع رقم {{project_number}} — {{project_title}} (عدد {{items_count}} بند).
+
+مرفق لسيادتكم محضر التسليم، نرجو التكرم بمراجعته وتوقيعه وختمه وموافاتنا بنسخة منه.
 
 مع خالص التحية،
 {{company_name}}`,

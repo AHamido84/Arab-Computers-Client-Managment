@@ -13,7 +13,7 @@ describe("ICU messages", () => {
     it(`${locale}: all messages format`, () => {
       const errors: string[] = [];
       const t = createTranslator({ locale, messages, onError: (e) => errors.push(e.message) });
-      const args = { count: 2, name: "X", page: 1, pages: 2, min: 1, max: 2, date: "d", year: 1, email: "e", vars: "V", value: "v", example: "{{x}}", rate: 14, version: 2, list: "a, b", created: 3, overdue: 1, intervals: "30, 14", every: 7, currency: "EGP", link: "https://x" };
+      const args = { count: 2, name: "X", page: 1, pages: 2, min: 1, max: 2, date: "d", year: 1, email: "e", vars: "V", value: "v", example: "{{x}}", rate: 14, version: 2, list: "a, b", created: 3, overdue: 1, intervals: "30, 14", every: 7, currency: "EGP", link: "https://x", ref: "Q-1", system: "HR", done: 1, total: 2, n: 1, actual: 2, estimated: 4 };
       for (const k of keys(messages)) t(k as never, args as never);
       expect(errors.join("\n")).toBe("");
     });

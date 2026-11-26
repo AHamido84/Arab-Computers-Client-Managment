@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ReportFiltersBar } from "@/components/reports/report-filters";
-import { requireUser } from "@/server/auth-guard";
+import { requirePagePermission } from "@/server/auth-guard";
 import { buildReport, defaultFilters, formatCell, parseFilters, REPORT_TYPES, type ReportType } from "@/server/services/reports";
 import { getAssignableUsers, getClientOptions } from "@/server/services/lookups";
 import type { AppLocale } from "@/i18n/config";
@@ -19,7 +19,7 @@ export async function generateMetadata() {
 }
 
 export default async function ReportsPage({ searchParams }: PageProps<"/reports">) {
-  await requireUser();
+  await requirePagePermission("read");
   const sp = (await searchParams) as Record<string, string | undefined>;
   const type: ReportType = REPORT_TYPES.includes(sp.type as ReportType) ? (sp.type as ReportType) : "amc";
   const explicit = parseFilters(sp);

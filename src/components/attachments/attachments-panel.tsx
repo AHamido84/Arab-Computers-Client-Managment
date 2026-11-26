@@ -30,7 +30,7 @@ export function AttachmentsPanel({
   revalidate,
   defaultLabel,
 }: {
-  entityType: "CLIENT" | "CONTRACT" | "REQUEST" | "QUOTATION";
+  entityType: "CLIENT" | "CONTRACT" | "REQUEST" | "QUOTATION" | "DELIVERY_PROJECT" | "DELIVERY_TASK";
   entityId: string;
   items: AttachmentItem[];
   canWrite: boolean;

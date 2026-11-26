@@ -11,7 +11,10 @@ import {
   ClipboardList,
   FileSignature,
   FileText,
+  FolderKanban,
   LayoutDashboard,
+  ListChecks,
+  ListTodo,
   Mail,
   Settings,
 } from "lucide-react";
@@ -32,13 +35,27 @@ import {
 
 type NavItem = { href: string; key: string; icon: React.ComponentType; badge?: number };
 
-export function AppSidebar({ isAdmin, unread }: { isAdmin: boolean; unread: number }) {
+export function AppSidebar({ role, unread }: { role: "ADMIN" | "ACCOUNT_MANAGER" | "VIEWER" | "TEAM_MEMBER"; unread: number }) {
   const t = useTranslations("nav");
   const tApp = useTranslations("app");
   const pathname = usePathname();
   const locale = useLocale();
 
-  const groups: { label: string; items: NavItem[] }[] = [
+  const isAdmin = role === "ADMIN";
+  const isTeam = role === "TEAM_MEMBER";
+  const delivery: { label: string; items: NavItem[] } = {
+    label: t("sectionDelivery"),
+    items: isTeam
+      ? [{ href: "/my-tasks", key: "myTasks", icon: ListTodo }]
+      : [
+          { href: "/delivery", key: "delivery", icon: FolderKanban },
+          { href: "/tasks", key: "tasks", icon: ListChecks },
+          ...(role === "VIEWER" ? [] : [{ href: "/my-tasks", key: "myTasks", icon: ListTodo }]),
+        ],
+  };
+  const groups: { label: string; items: NavItem[] }[] = isTeam
+    ? [delivery, { label: t("sectionMain"), items: [{ href: "/notifications", key: "notifications", icon: Bell, badge: unread }] }]
+    : [
     {
       label: t("sectionMain"),
       items: [
@@ -57,6 +74,7 @@ export function AppSidebar({ isAdmin, unread }: { isAdmin: boolean; unread: numb
         { href: "/emails", key: "emails", icon: Mail },
       ],
     },
+    delivery,
   ];
   if (isAdmin) {
     groups.push({ label: t("sectionAdmin"), items: [{ href: "/settings", key: "settings", icon: Settings }] });

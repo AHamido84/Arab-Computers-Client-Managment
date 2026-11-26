@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ClientsTable } from "@/components/clients/clients-table";
-import { can, requireUser } from "@/server/auth-guard";
+import { can, requirePagePermission } from "@/server/auth-guard";
 import { listClients } from "@/server/services/clients";
 import { getAssignableUsers, getLookups } from "@/server/services/lookups";
 
@@ -14,7 +14,7 @@ export async function generateMetadata() {
 }
 
 export default async function ClientsPage() {
-  const user = await requireUser();
+  const user = await requirePagePermission("read");
   const [t, rows, statuses, industries, managers] = await Promise.all([
     getTranslations(),
     listClients(),

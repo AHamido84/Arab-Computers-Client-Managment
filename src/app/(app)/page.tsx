@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import {
   AlertTriangle,
@@ -34,6 +35,8 @@ export async function generateMetadata() {
 
 export default async function DashboardPage() {
   const user = await requireUser();
+  // Team members have no access to business data — their home is "My tasks".
+  if (!can(user.role, "read")) redirect("/my-tasks");
   const settings = await getSettings();
   const [t, locale, k, months, overdue] = await Promise.all([
     getTranslations(),

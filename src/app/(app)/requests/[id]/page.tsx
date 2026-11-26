@@ -12,7 +12,7 @@ import { TotalsBlock } from "@/components/shared/totals-summary-server";
 import { AttachmentsPanel } from "@/components/attachments/attachments-panel";
 import { toAttachmentItems } from "@/components/attachments/types";
 import { RequestStatusChanger } from "@/components/requests/status-changer";
-import { can, requireUser } from "@/server/auth-guard";
+import { can, requirePagePermission } from "@/server/auth-guard";
 import { getRequest } from "@/server/services/requests";
 import { listAttachments } from "@/server/services/attachments";
 import { getSettings } from "@/server/services/settings";
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: PageProps<"/requests/[id]">) 
 }
 
 export default async function RequestPage({ params }: PageProps<"/requests/[id]">) {
-  const user = await requireUser();
+  const user = await requirePagePermission("read");
   const { id } = await params;
   const [t, locale, r, files, settings] = await Promise.all([
     getTranslations(),

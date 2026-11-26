@@ -1,14 +1,19 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser } from "@/server/auth-guard";
+import { can, getCurrentUser } from "@/server/auth-guard";
+import { taskAccess } from "@/server/services/delivery";
 import { readFile } from "@/server/services/storage";
 
 /** Stream a private attachment to a signed-in user. `?download=1` forces download. */
 export async function GET(req: Request, ctx: RouteContext<"/api/files/[id]">) {
-  if (!(await getCurrentUser())) return new NextResponse("Unauthorized", { status: 401 });
+  const user = await getCurrentUser();
+  if (!user) return new NextResponse("Unauthorized", { status: 401 });
   const { id } = await ctx.params;
   const att = await db.attachment.findUnique({ where: { id } });
   if (!att) return new NextResponse("Not found", { status: 404 });
+  const allowed =
+    att.entityType === "DELIVERY_TASK" ? !!(await taskAccess(att.entityId, user))?.canView : can(user.role, "read");
+  if (!allowed) return new NextResponse("Forbidden", { status: 403 });
   const file = await readFile(att.url);
   if (!file) return new NextResponse("Not found", { status: 404 });
 

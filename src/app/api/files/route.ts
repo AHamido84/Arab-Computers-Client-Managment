@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { ForbiddenError, requirePermission } from "@/server/auth-guard";
+import { ForbiddenError, can, getCurrentUser } from "@/server/auth-guard";
+import { taskAccess } from "@/server/services/delivery";
 import { ALLOWED_TYPES, MAX_UPLOAD_BYTES, saveFile } from "@/server/services/storage";
 import { clientIdFor } from "@/server/services/attachments";
 import { activity, audit } from "@/server/services/audit";
 
 const metaSchema = z.object({
-  entityType: z.enum(["CLIENT", "CONTRACT", "REQUEST", "QUOTATION"]),
+  entityType: z.enum(["CLIENT", "CONTRACT", "REQUEST", "QUOTATION", "DELIVERY_PROJECT", "DELIVERY_TASK"]),
   entityId: z.string().min(1),
   label: z.string().trim().max(120).optional(),
 });
@@ -15,7 +16,8 @@ const metaSchema = z.object({
 /** Upload an attachment (multipart/form-data: file, entityType, entityId, label?). */
 export async function POST(req: Request) {
   try {
-    const user = await requirePermission("write");
+    const user = await getCurrentUser();
+    if (!user) throw new ForbiddenError();
     const form = await req.formData();
     const meta = metaSchema.safeParse({
       entityType: form.get("entityType"),
@@ -24,6 +26,13 @@ export async function POST(req: Request) {
     });
     const file = form.get("file");
     if (!meta.success || !(file instanceof File)) return NextResponse.json({ error: "validation.invalid" }, { status: 400 });
+    // Permission depends on what the file is attached to.
+    const t = meta.data.entityType;
+    const allowed =
+      t === "DELIVERY_TASK" ? !!(await taskAccess(meta.data.entityId, user))?.canWork
+      : t === "DELIVERY_PROJECT" ? can(user.role, "manageDelivery")
+      : can(user.role, "write");
+    if (!allowed) throw new ForbiddenError();
     if (file.size > MAX_UPLOAD_BYTES) return NextResponse.json({ error: "files.tooLarge" }, { status: 413 });
     if (!ALLOWED_TYPES.includes(file.type)) return NextResponse.json({ error: "files.badType" }, { status: 415 });
 

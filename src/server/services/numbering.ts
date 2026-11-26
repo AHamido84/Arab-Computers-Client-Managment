@@ -24,3 +24,12 @@ export async function nextNumber(tx: Prisma.TransactionClient, kind: NumberKind,
   const c = await tx.counter.upsert({ where: { scope }, create: { scope, value: 1 }, update: { value: { increment: 1 } } });
   return formatDocNumber(format, c.value, at);
 }
+
+/** Delivery project numbers (format in Settings.deliveryProjectNumberFormat). */
+export async function nextDeliveryNumber(tx: Prisma.TransactionClient, at = new Date()) {
+  const settings = await getSettings();
+  const format = settings.deliveryProjectNumberFormat;
+  const scope = counterScope("delivery", format, at);
+  const c = await tx.counter.upsert({ where: { scope }, create: { scope, value: 1 }, update: { value: { increment: 1 } } });
+  return formatDocNumber(format, c.value, at);
+}

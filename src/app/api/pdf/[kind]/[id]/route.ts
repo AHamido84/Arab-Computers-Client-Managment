@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/server/auth-guard";
+import { can, getCurrentUser } from "@/server/auth-guard";
 import { buildDocument, DOC_KINDS, type DocKind } from "@/server/services/documents";
 
 /**
@@ -7,7 +7,9 @@ import { buildDocument, DOC_KINDS, type DocKind } from "@/server/services/docume
  * Renders the document on the letterhead. Default language = client preference.
  */
 export async function GET(req: Request, ctx: RouteContext<"/api/pdf/[kind]/[id]">) {
-  if (!(await getCurrentUser())) return new NextResponse("Unauthorized", { status: 401 });
+  const user = await getCurrentUser();
+  if (!user) return new NextResponse("Unauthorized", { status: 401 });
+  if (!can(user.role, "read")) return new NextResponse("Forbidden", { status: 403 });
   const { kind, id } = await ctx.params;
   if (!DOC_KINDS.includes(kind as DocKind)) return new NextResponse("Not found", { status: 404 });
   const url = new URL(req.url);

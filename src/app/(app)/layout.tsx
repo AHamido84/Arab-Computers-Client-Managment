@@ -26,7 +26,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <a href="#main-content" className="sr-only z-50 rounded-md bg-primary px-3 py-2 text-primary-foreground focus:not-sr-only focus:fixed focus:start-3 focus:top-3">
         {t("common.skipToContent")}
       </a>
-      <AppSidebar isAdmin={user.role === "ADMIN"} unread={unread} />
+      <AppSidebar role={user.role} unread={unread} />
       <SidebarInset className="min-w-0">
         <header className="no-print sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/85 px-4 backdrop-blur">
           <SidebarTrigger className="-ms-1" />

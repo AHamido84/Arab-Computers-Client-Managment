@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
-import { Building2, Lock, Pencil } from "lucide-react";
+import { Building2, FolderKanban, Lock, Pencil } from "lucide-react";
+import { db } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,7 +14,7 @@ import { TotalsBlock } from "@/components/shared/totals-summary-server";
 import { AttachmentsPanel } from "@/components/attachments/attachments-panel";
 import { toAttachmentItems } from "@/components/attachments/types";
 import { QuotationActions } from "@/components/quotations/quotation-actions";
-import { can, requireUser } from "@/server/auth-guard";
+import { can, requirePagePermission } from "@/server/auth-guard";
 import { getQuotation } from "@/server/services/quotations";
 import { quotationVars } from "@/server/services/template-vars";
 import { fillPlaceholders } from "@/lib/templates/render";
@@ -31,7 +32,7 @@ export async function generateMetadata({ params }: PageProps<"/quotations/[id]">
 }
 
 export default async function QuotationPage({ params }: PageProps<"/quotations/[id]">) {
-  const user = await requireUser();
+  const user = await requirePagePermission("read");
   const { id } = await params;
   const [t, locale, q, files, settings] = await Promise.all([
     getTranslations(),
@@ -46,6 +47,7 @@ export default async function QuotationPage({ params }: PageProps<"/quotations/[
   const totals = computeTotals(q.items, q.discount, q.vatPercent);
   const expired = (q.status === "DRAFT" || q.status === "SENT") && q.validUntil < todayUTC();
   const docDir = q.lang === "ar" ? "rtl" : "ltr";
+  const project = await db.deliveryProject.findFirst({ where: { quotationId: q.id }, select: { id: true } });
   // Show intro/terms with placeholders filled, exactly as they will print.
   const vars = await quotationVars(q);
   const intro = fillPlaceholders(q.introText, vars);
@@ -74,9 +76,16 @@ export default async function QuotationPage({ params }: PageProps<"/quotations/[
         actions={
           <>
             <DocumentMenu kind="quotation" id={q.id} defaultLang={q.lang} canEmail={can(user.role, "sendEmail")} />
+            {q.status === "ACCEPTED" && (project || can(user.role, "manageDelivery")) && (
+              <Button asChild variant={project ? "outline" : "default"}>
+                <Link href={project ? `/delivery/${project.id}` : `/delivery/new?quotationId=${q.id}`}>
+                  <FolderKanban /> {project ? t("delivery.viewProject") : t("delivery.createFromQuotation")}
+                </Link>
+              </Button>
+            )}
             {canWrite && (
             <>
-              <QuotationActions id={q.id} status={q.status} />
+              <QuotationActions id={q.id} status={q.status} canManageDelivery={can(user.role, "manageDelivery")} />
               {q.status === "DRAFT" && (
                 <Button asChild variant="outline">
                   <Link href={`/quotations/${q.id}/edit`}>

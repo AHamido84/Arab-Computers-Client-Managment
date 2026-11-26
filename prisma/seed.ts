@@ -9,6 +9,7 @@
  *   admin@arab-computers.com   / SEED_ADMIN_PASSWORD (default: Admin@12345)
  *   manager@arab-computers.com / Manager@12345
  *   viewer@arab-computers.com  / Viewer@12345
+ *   dev@arab-computers.com     / Team@12345   (team member — sees only their delivery tasks)
  */
 import "dotenv/config";
 import bcrypt from "bcryptjs";
@@ -124,6 +125,7 @@ async function seedBase() {
     { email: "manager@arab-computers.com", name: "Mona Saleh", role: "ACCOUNT_MANAGER", password: "Manager@12345", locale: "ar" },
     { email: "karim@arab-computers.com", name: "Karim Fathy", role: "ACCOUNT_MANAGER", password: "Manager@12345", locale: "en" },
     { email: "viewer@arab-computers.com", name: "Sara Adel", role: "VIEWER", password: "Viewer@12345", locale: "en" },
+    { email: "dev@arab-computers.com", name: "Omar Developer", role: "TEAM_MEMBER", password: "Team@12345", locale: "ar" },
   ] as const;
   for (const u of users) {
     await db.user.upsert({

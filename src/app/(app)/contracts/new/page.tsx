@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { ContractForm } from "@/components/contracts/contract-form";
-import { requirePagePermission } from "@/server/auth-guard";
+import { can, requirePagePermission } from "@/server/auth-guard";
 import { getClientOptions, getLookups } from "@/server/services/lookups";
 import { getSettings } from "@/server/services/settings";
 import { todayUTC } from "@/lib/format";
@@ -12,7 +12,7 @@ export async function generateMetadata() {
 }
 
 export default async function NewContractPage({ searchParams }: PageProps<"/contracts/new">) {
-  await requirePagePermission("write");
+  const user = await requirePagePermission("write");
   const { clientId } = (await searchParams) as { clientId?: string };
   const [t, clients, products, terms, settings] = await Promise.all([
     getTranslations("contracts"),
@@ -26,6 +26,7 @@ export default async function NewContractPage({ searchParams }: PageProps<"/cont
     <>
       <PageHeader title={t("new")} />
       <ContractForm
+        canManageDelivery={can(user.role, "manageDelivery")}
         clients={clients}
         products={products}
         paymentTerms={terms}

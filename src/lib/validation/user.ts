@@ -11,7 +11,7 @@ export const passwordSchema = z
 export const userCreateSchema = z.object({
   name: reqStr(120),
   email: z.string().trim().toLowerCase().pipe(z.email("validation.email")),
-  role: z.enum(["ADMIN", "ACCOUNT_MANAGER", "VIEWER"]),
+  role: z.enum(["ADMIN", "ACCOUNT_MANAGER", "VIEWER", "TEAM_MEMBER"]),
   locale: z.enum(["ar", "en"]),
   password: passwordSchema,
 });
@@ -19,7 +19,7 @@ export const userCreateSchema = z.object({
 export const userUpdateSchema = z.object({
   name: reqStr(120),
   email: z.string().trim().toLowerCase().pipe(z.email("validation.email")),
-  role: z.enum(["ADMIN", "ACCOUNT_MANAGER", "VIEWER"]),
+  role: z.enum(["ADMIN", "ACCOUNT_MANAGER", "VIEWER", "TEAM_MEMBER"]),
   locale: z.enum(["ar", "en"]),
   active: z.boolean(),
 });

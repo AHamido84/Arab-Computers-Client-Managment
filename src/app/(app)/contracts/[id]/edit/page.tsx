@@ -2,13 +2,13 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { ContractForm } from "@/components/contracts/contract-form";
-import { requirePagePermission } from "@/server/auth-guard";
+import { can, requirePagePermission } from "@/server/auth-guard";
 import { getContract } from "@/server/services/contracts";
 import { getClientOptions, getLookups } from "@/server/services/lookups";
 import { toDateInput } from "@/lib/validation/common";
 
 export default async function EditContractPage({ params }: PageProps<"/contracts/[id]/edit">) {
-  await requirePagePermission("write");
+  const user = await requirePagePermission("write");
   const { id } = await params;
   const [t, c, clients, products, terms] = await Promise.all([
     getTranslations("contracts"),
@@ -22,6 +22,7 @@ export default async function EditContractPage({ params }: PageProps<"/contracts
     <>
       <PageHeader title={t("edit")} description={<span dir="ltr">{c.number}</span>} />
       <ContractForm
+        canManageDelivery={can(user.role, "manageDelivery")}
         contractId={c.id}
         clients={clients}
         products={products.filter((p) => p.active || c.products.some((cp) => cp.productId === p.id))}

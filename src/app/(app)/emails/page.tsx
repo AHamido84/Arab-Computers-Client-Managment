@@ -3,7 +3,7 @@ import { Mail } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { EmailsTable, type EmailRow } from "@/components/email/emails-table";
-import { requireUser } from "@/server/auth-guard";
+import { requirePagePermission } from "@/server/auth-guard";
 import { db } from "@/lib/db";
 
 export async function generateMetadata() {
@@ -11,7 +11,7 @@ export async function generateMetadata() {
 }
 
 export default async function EmailsPage() {
-  await requireUser();
+  await requirePagePermission("read");
   const [t, logs] = await Promise.all([
     getTranslations("email"),
     db.emailLog.findMany({

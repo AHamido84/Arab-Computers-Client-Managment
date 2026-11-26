@@ -13,7 +13,7 @@ import { Timeline } from "@/components/shared/timeline";
 import { DeleteButton } from "@/components/shared/delete-button";
 import { AttachmentsPanel } from "@/components/attachments/attachments-panel";
 import { toAttachmentItems } from "@/components/attachments/types";
-import { can, requireUser } from "@/server/auth-guard";
+import { can, requirePagePermission } from "@/server/auth-guard";
 import { getClientProfile } from "@/server/services/clients";
 import { listAttachments } from "@/server/services/attachments";
 import { getSettings } from "@/server/services/settings";
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: PageProps<"/clients/[id]">) {
 }
 
 export default async function ClientProfilePage({ params, searchParams }: PageProps<"/clients/[id]">) {
-  const user = await requireUser();
+  const user = await requirePagePermission("read");
   const { id } = await params;
   const { tab } = (await searchParams) as { tab?: string };
   const [t, locale, c, files, settings] = await Promise.all([

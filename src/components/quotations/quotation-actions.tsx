@@ -10,11 +10,16 @@ import { canTransition, type QuotationStatus } from "@/lib/validation/quotation"
 import { newQuotationVersionAction, setQuotationStatusAction } from "@/server/actions/quotations";
 
 /** Status workflow buttons + "new version" for a quotation. */
-export function QuotationActions({ id, status }: { id: string; status: QuotationStatus }) {
+export function QuotationActions({ id, status, canManageDelivery = false }: { id: string; status: QuotationStatus; canManageDelivery?: boolean }) {
   const t = useTranslations("quotations");
   const router = useRouter();
   const { pending, run } = useServerAction();
-  const go = (to: QuotationStatus) => run(() => setQuotationStatusAction(id, to), { success: "quotations.statusUpdated", onSuccess: () => router.refresh() });
+  const go = (to: QuotationStatus) =>
+    run(() => setQuotationStatusAction(id, to), {
+      success: "quotations.statusUpdated",
+      // Accepted → straight to the delivery confirmation screen.
+      onSuccess: () => (to === "ACCEPTED" && canManageDelivery ? router.push(`/delivery/new?quotationId=${id}`) : router.refresh()),
+    });
 
   return (
     <>
