@@ -9,7 +9,8 @@ import { KpiCard } from "@/components/shared/kpi-card";
 import { DeleteButton } from "@/components/shared/delete-button";
 import { AttachmentsPanel } from "@/components/attachments/attachments-panel";
 import { toAttachmentItems } from "@/components/attachments/types";
-import { TasksTable } from "@/components/delivery/tasks-table";
+import { TaskViews } from "@/components/delivery/task-views";
+import type { ViewKey } from "@/components/delivery/view-switcher";
 import { ProgressBar } from "@/components/delivery/progress-bar";
 import { PROJECT_STATUS_COLOR } from "@/components/delivery/projects-table";
 import { AddTaskDialog, EditProjectDialog } from "@/components/delivery/project-dialogs";
@@ -28,9 +29,10 @@ export async function generateMetadata({ params }: PageProps<"/delivery/[id]">) 
   return { title: p ? `${p.number} · ${p.title}` : "404" };
 }
 
-export default async function ProjectPage({ params }: PageProps<"/delivery/[id]">) {
+export default async function ProjectPage({ params, searchParams }: PageProps<"/delivery/[id]">) {
   const user = await requirePagePermission("read");
   const { id } = await params;
+  const sp = await searchParams;
   const [t, locale, p, tasks, people, files] = await Promise.all([
     getTranslations(),
     getLocale() as Promise<AppLocale>,
@@ -107,7 +109,18 @@ export default async function ProjectPage({ params }: PageProps<"/delivery/[id]"
 
       {p.notes && <p className="mb-6 whitespace-pre-wrap rounded-lg border bg-muted/30 p-3 text-sm">{p.notes}</p>}
 
-      <TasksTable rows={tasks} showProject={false} showPrice people={people} today={today.toISOString()} />
+      <TaskViews
+        rows={tasks}
+        people={people}
+        today={today.toISOString()}
+        views={["table", "kanban", "timeline"]}
+        view={(typeof sp.view === "string" ? sp.view : "table") as ViewKey}
+        userId={user.id}
+        canManage={canManage}
+        showProject={false}
+        showPrice
+        project={{ startDate: p.startDate?.toISOString() ?? null, targetDate: p.targetDate?.toISOString() ?? null }}
+      />
 
       <Card className="mt-6">
         <CardHeader>

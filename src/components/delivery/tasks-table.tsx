@@ -30,7 +30,9 @@ export function TasksTable({
   showPrice = false,
   people,
   today,
+  withFilters = true,
 }: {
+  withFilters?: boolean;
   rows: TaskRow[];
   showProject?: boolean;
   showPrice?: boolean;
@@ -173,7 +175,7 @@ export function TasksTable({
       rowHref={(r) => `/tasks/${r.id}`}
       rowClassName={(r) => (r.overdue ? "bg-destructive/5 hover:bg-destructive/10" : undefined)}
       searchText={(r) => [r.title, r.project.number, r.project.title, r.project.client.nameAr, r.project.client.nameEn, ...r.assignees.map((a) => a.name)].join(" ")}
-      filters={[
+      filters={withFilters ? [
         { columnId: "due", label: t("tasks.dueDate"), options: [{ value: "overdue", label: t("tasks.overdue") }, { value: "week", label: t("tasks.dueThisWeek") }, { value: "later", label: t("tasks.later") }] },
         { columnId: "status", label: t("tasks.status"), options: TASK_STATUSES.map((s) => ({ value: s, label: t(`taskStatus.${s}`) })) },
         { columnId: "assignee", label: t("tasks.assignees"), options: people.map((p) => ({ value: p.id, label: p.name })) },
@@ -183,7 +185,7 @@ export function TasksTable({
               { columnId: "project", label: t("tasks.project"), options: projects.map((p) => ({ value: p.id, label: `${p.number} · ${p.title}` })) },
             ]
           : []),
-      ]}
+      ] : []}
     />
   );
 }
