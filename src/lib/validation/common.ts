@@ -5,7 +5,7 @@
  */
 import { z } from "zod";
 
-const emptyToUndefined = (v: unknown) => (v === "" || v === null ? undefined : v);
+const emptyToUndefined = (v: unknown) => (v === null || (typeof v === "string" && v.trim() === "") ? undefined : v);
 
 export const reqStr = (max = 200) =>
   z.string({ error: "validation.required" }).trim().min(1, "validation.required").max(max, "validation.maxLength");

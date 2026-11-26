@@ -20,7 +20,8 @@
     "sectionDelivery": "Delivery",
     "delivery": "Delivery projects",
     "tasks": "All tasks",
-    "myTasks": "My tasks"
+    "myTasks": "My tasks",
+    "software": "Software"
   },
   "header": {
     "language": "Language",
@@ -1002,5 +1003,34 @@
     "barLabel": "{title}: {start} → {due}, {status}",
     "noDates": "Tasks need a due date to appear on the timeline.",
     "dragHint": "Drag your tasks between columns to change status."
+  },
+  "software": {
+    "title": "Software",
+    "subtitle": "Systems and software you implement and maintain for clients. They appear when creating contracts.",
+    "add": "Add software",
+    "edit": "Edit software",
+    "dialogHint": "Enter the name in both Arabic and English.",
+    "nameAr": "Name (Arabic)",
+    "nameEn": "Name (English)",
+    "name": "Software",
+    "description": "Description",
+    "active": "Available for new contracts",
+    "activeHint": "Turn off to hide it from new contracts while keeping its history.",
+    "status": "Status",
+    "activeLabel": "Active",
+    "inactiveLabel": "Inactive",
+    "clients": "Clients",
+    "contracts": "Contracts",
+    "activeContracts": "Active contracts",
+    "activeCount": "{count} active",
+    "usedIn": "Contracts using this software",
+    "notUsed": "No contracts use this software yet.",
+    "empty": "No software yet",
+    "emptyHint": "Add the systems you implement so you can pick them on contracts.",
+    "created": "Software added",
+    "updated": "Software updated",
+    "deleted": "Software deleted",
+    "duplicate": "Software with this name already exists.",
+    "inUse": "This software is used in contracts — make it inactive instead of deleting it."
   }
 }

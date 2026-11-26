@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
+  AppWindow,
   BarChart3,
   Bell,
   Building2,
@@ -71,6 +72,7 @@ export function AppSidebar({ role, unread }: { role: "ADMIN" | "ACCOUNT_MANAGER"
         { href: "/contracts", key: "contracts", icon: FileSignature },
         { href: "/requests", key: "requests", icon: ClipboardList },
         { href: "/quotations", key: "quotations", icon: FileText },
+        { href: "/software", key: "software", icon: AppWindow },
         { href: "/emails", key: "emails", icon: Mail },
       ],
     },

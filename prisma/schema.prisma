@@ -152,17 +152,18 @@ enum LookupKind {
 }
 
 model LookupValue {
-  id        String     @id @default(cuid())
-  kind      LookupKind
-  key       String // stable machine key, e.g. "ACTIVE"
-  labelAr   String
-  labelEn   String
-  color     String? // tailwind-ish token or hex used for badges
-  sortOrder Int        @default(0)
-  active    Boolean    @default(true)
-  isSystem  Boolean    @default(false) // system values cannot be deleted
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id          String     @id @default(cuid())
+  kind        LookupKind
+  key         String // stable machine key, e.g. "ACTIVE"
+  labelAr     String
+  labelEn     String
+  description String? // used by PRODUCT (software / systems)
+  color       String? // tailwind-ish token or hex used for badges
+  sortOrder   Int        @default(0)
+  active      Boolean    @default(true)
+  isSystem    Boolean    @default(false) // system values cannot be deleted
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
   clientsByStatus   Client[]          @relation("ClientStatus")
   clientsByIndustry Client[]          @relation("ClientIndustry")
