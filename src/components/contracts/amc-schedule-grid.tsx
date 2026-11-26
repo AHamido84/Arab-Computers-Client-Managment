@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Banknote, Loader2, Lock, MoreHorizontal, RotateCcw, SlidersHorizontal, Undo2 } from "lucide-react";
+import Link from "next/link";
+import { Banknote, FileText, Loader2, Lock, Mail, MoreHorizontal, RotateCcw, SlidersHorizontal, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,10 +31,12 @@ type Props = {
   currency: string;
   defaultIncrease: number;
   canWrite: boolean;
+  canEmail: boolean;
+  docLang: "ar" | "en";
   today: string;
 };
 
-export function AmcScheduleGrid({ contractId, lines, currency, defaultIncrease, canWrite, today }: Props) {
+export function AmcScheduleGrid({ contractId, lines, currency, defaultIncrease, canWrite, canEmail, docLang, today }: Props) {
   const t = useTranslations();
   const f = useFmt();
   const router = useRouter();
@@ -85,7 +88,7 @@ export function AmcScheduleGrid({ contractId, lines, currency, defaultIncrease, 
               <TableHead className="text-end">{t("amc.amount")}</TableHead>
               <TableHead>{t("amc.status")}</TableHead>
               <TableHead>{t("amc.paid")}</TableHead>
-              {canWrite && <TableHead className="w-10" />}
+              <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -128,7 +131,7 @@ export function AmcScheduleGrid({ contractId, lines, currency, defaultIncrease, 
                       "—"
                     )}
                   </TableCell>
-                  {canWrite && (
+                  {(
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -137,7 +140,19 @@ export function AmcScheduleGrid({ contractId, lines, currency, defaultIncrease, 
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          {!paid && (
+                          <DropdownMenuItem asChild>
+                            <a href={`/api/pdf/amc/${l.id}?lang=${docLang}`} target="_blank" rel="noreferrer">
+                              <FileText /> {t("documents.amcNotice")}
+                            </a>
+                          </DropdownMenuItem>
+                          {canEmail && !paid && (
+                            <DropdownMenuItem asChild>
+                              <Link href={`/emails/compose?kind=amc&id=${l.id}`}>
+                                <Mail /> {t("documents.emailAmc")}
+                              </Link>
+                            </DropdownMenuItem>
+                          )}
+                          {canWrite && !paid && (
                             <>
                               <DropdownMenuItem onClick={() => setPay(l)}>
                                 <Banknote /> {t("amc.markPaid")}
@@ -147,7 +162,7 @@ export function AmcScheduleGrid({ contractId, lines, currency, defaultIncrease, 
                               </DropdownMenuItem>
                             </>
                           )}
-                          {paid && (
+                          {canWrite && paid && (
                             <ConfirmDialog
                               destructive
                               title={t("amc.unmarkPaid")}
@@ -175,7 +190,7 @@ export function AmcScheduleGrid({ contractId, lines, currency, defaultIncrease, 
             <TableRow>
               <TableCell colSpan={3}>{t("amc.total")}</TableCell>
               <TableCell className="num text-end">{f.money(total, currency)}</TableCell>
-              <TableCell colSpan={canWrite ? 3 : 2} />
+              <TableCell colSpan={3} />
             </TableRow>
           </TableFooter>
         </Table>

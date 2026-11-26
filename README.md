@@ -162,7 +162,18 @@ Implemented in `src/lib/amc/engine.ts` and covered by `tests/amc-engine.test.ts`
 - **Paid years are locked** and never recalculated.
 - Due dates are one year apart, starting at the AMC start date (default: contract date + 1 year).
 
+### Documents & email
+
+- **PDFs** (`/api/pdf/{contract|amc|quotation}/{id}?lang=ar|en`) are rendered on the server with `@react-pdf/renderer` on the company letterhead: logo, address, footer and page numbers. They default to the client's preferred language.
+  - Templates are edited in *Settings → Templates*; placeholders such as `{{client_name}}` are filled automatically.
+  - The logo and footer are set in *Settings → Company & letterhead*.
+- **Email** is always reviewed by a person: *Email to client* opens a prefilled form with recipients from the client's contacts, CC, subject and body in the client's language, and the PDF attached. Nothing is sent to clients automatically.
+  - Every send (or failure) is logged in *Sent emails* and on the client timeline, together with the exact PDF that was sent.
+  - Choose the provider in *Settings → Notifications & email*, and use *Send test email* to verify it.
+  - Local development without credentials: set `EMAIL_DEV_OUTBOX=1` and emails are written to `.uploads/outbox/` instead of being sent. In production, a missing provider shows an error instead of silently dropping mail.
+
 ### Notes
 
 - **PDF digits:** PDFs always use Latin digits (1,234.50). @react-pdf mis-orders Arabic-Indic decimal separators. The "Arabic-Indic digits" setting applies to the on-screen UI only.
 - Fonts: IBM Plex Sans Arabic (SIL OFL), stored in `src/pdf/fonts`.
+- react-pdf caveat: never set `lineHeight` on a `<Page>` style. It makes fixed footers disappear, so set it on text styles instead (see `src/pdf/letterhead.tsx`).

@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge, STATUS_COLOR } from "@/components/shared/status-badge";
 import { DeleteButton } from "@/components/shared/delete-button";
+import { DocumentMenu } from "@/components/shared/document-menu";
 import { TotalsBlock } from "@/components/shared/totals-summary-server";
 import { AttachmentsPanel } from "@/components/attachments/attachments-panel";
 import { toAttachmentItems } from "@/components/attachments/types";
@@ -71,7 +72,9 @@ export default async function QuotationPage({ params }: PageProps<"/quotations/[
           </span>
         }
         actions={
-          canWrite && (
+          <>
+            <DocumentMenu kind="quotation" id={q.id} defaultLang={q.lang} canEmail={can(user.role, "sendEmail")} />
+            {canWrite && (
             <>
               <QuotationActions id={q.id} status={q.status} />
               {q.status === "DRAFT" && (
@@ -85,7 +88,8 @@ export default async function QuotationPage({ params }: PageProps<"/quotations/[
                 <DeleteButton action={deleteQuotationAction.bind(null, q.id)} redirectTo="/quotations" successKey="quotations.deleted" />
               )}
             </>
-          )
+            )}
+          </>
         }
       />
 

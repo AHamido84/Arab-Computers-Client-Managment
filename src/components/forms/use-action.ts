@@ -25,7 +25,10 @@ export function useServerAction() {
           if (opts.success) toast.success(t(opts.success));
           opts.onSuccess?.(r.data);
         } else {
-          toast.error(t.has(r.error) ? t(r.error) : t("common.error"));
+          // For validation failures, show the first specific field message instead of a generic one.
+          const first = r.error === "validation.invalid" ? Object.values(r.fieldErrors ?? {})[0] : undefined;
+          const key = first && t.has(first) ? first : r.error;
+          toast.error(t.has(key) ? t(key) : t("common.error"));
           opts.onError?.(r);
         }
         resolve(r);

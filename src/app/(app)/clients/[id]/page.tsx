@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
-import { ClipboardPlus, FilePlus2, Globe, Mail, MapPin, MessageCircle, Pencil, Phone, Star, UserRound } from "lucide-react";
+import { ClipboardPlus, FilePlus2, Paperclip, Globe, Mail, MapPin, MessageCircle, Pencil, Phone, Star, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -348,11 +348,23 @@ export default async function ClientProfilePage({ params, searchParams }: PagePr
               ) : (
                 <ul className="divide-y">
                   {c.emails.map((e) => (
-                    <li key={e.id} className="py-3 text-sm">
-                      <p className="font-medium">{e.subject}</p>
-                      <p className="text-xs text-muted-foreground" dir="auto">
-                        {e.to.join(", ")} · {formatDateTime(e.createdAt, locale, dg)} {e.sentBy ? `· ${e.sentBy.name}` : ""}
-                      </p>
+                    <li key={e.id} className="flex flex-wrap items-start justify-between gap-2 py-3 text-sm">
+                      <div className="min-w-0">
+                        <p className="font-medium" dir="auto">
+                          {e.subject}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          <span dir="ltr">{e.to.join(", ")}</span> · {formatDateTime(e.createdAt, locale, dg)} {e.sentBy ? `· ${e.sentBy.name}` : ""}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {e.attachmentUrl && (
+                          <a href={`/api/emails/${e.id}/attachment`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline" dir="ltr">
+                            <Paperclip className="size-3" /> {e.attachmentName}
+                          </a>
+                        )}
+                        <StatusBadge color={e.status === "SENT" ? "green" : "red"}>{t(`email.${e.status}`)}</StatusBadge>
+                      </div>
                     </li>
                   ))}
                 </ul>

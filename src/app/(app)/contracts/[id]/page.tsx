@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge, STATUS_COLOR } from "@/components/shared/status-badge";
 import { DeleteButton } from "@/components/shared/delete-button";
+import { DocumentMenu } from "@/components/shared/document-menu";
 import { AmcScheduleGrid } from "@/components/contracts/amc-schedule-grid";
 import { AttachmentsPanel } from "@/components/attachments/attachments-panel";
 import { toAttachmentItems } from "@/components/attachments/types";
@@ -58,7 +59,9 @@ export default async function ContractPage({ params }: PageProps<"/contracts/[id
           </Link>
         }
         actions={
-          canWrite && (
+          <>
+            <DocumentMenu kind="contract" id={c.id} defaultLang={c.client.preferredLang} canEmail={can(user.role, "sendEmail")} />
+            {canWrite && (
             <>
               <Button asChild variant="outline">
                 <Link href={`/contracts/${c.id}/edit`}>
@@ -69,7 +72,8 @@ export default async function ContractPage({ params }: PageProps<"/contracts/[id
                 <DeleteButton action={deleteContractAction.bind(null, c.id)} redirectTo={`/clients/${c.clientId}`} successKey="contracts.deleted" />
               )}
             </>
-          )
+            )}
+          </>
         }
       />
 
@@ -115,6 +119,8 @@ export default async function ContractPage({ params }: PageProps<"/contracts/[id
                   currency={c.currency}
                   defaultIncrease={Number(c.amcIncreasePercent)}
                   canWrite={canWrite}
+                  canEmail={can(user.role, "sendEmail")}
+                  docLang={c.client.preferredLang}
                   today={todayUTC().toISOString()}
                 />
               ) : (
