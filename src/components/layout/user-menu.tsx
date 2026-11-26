@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { LogOut } from "lucide-react";
+import { KeyRound, LogOut } from "lucide-react";
+import { ChangePasswordDialog } from "./change-password-dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +18,7 @@ import { logoutAction } from "@/server/actions/auth";
 
 export function UserMenu({ name, email, role }: { name: string; email: string; role: string }) {
   const t = useTranslations();
+  const [pwOpen, setPwOpen] = useState(false);
   const initials = name
     .split(/\s+/)
     .slice(0, 2)
@@ -23,6 +26,8 @@ export function UserMenu({ name, email, role }: { name: string; email: string; r
     .join("")
     .toUpperCase();
   return (
+    <>
+    <ChangePasswordDialog open={pwOpen} onOpenChange={setPwOpen} />
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-9 gap-2 px-2">
@@ -41,10 +46,14 @@ export function UserMenu({ name, email, role }: { name: string; email: string; r
           <span className="text-xs font-normal text-muted-foreground">{t(`roles.${role}`)}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => setPwOpen(true)}>
+          <KeyRound /> {t("users.changePassword")}
+        </DropdownMenuItem>
         <DropdownMenuItem variant="destructive" onClick={() => logoutAction()}>
           <LogOut /> {t("header.logout")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    </>
   );
 }

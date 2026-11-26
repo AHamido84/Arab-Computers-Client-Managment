@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { cn } from "cn"
+import { useFieldA11y } from "@/components/forms/field-context"
 import { Select as SelectPrimitive } from "radix-ui"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
@@ -38,8 +39,10 @@ function SelectTrigger({
 }: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
   size?: "sm" | "default"
 }) {
+  const a11y = useFieldA11y(props)
   return (
     <SelectPrimitive.Trigger
+      {...a11y}
       data-slot="select-trigger"
       data-size={size}
       className={cn(

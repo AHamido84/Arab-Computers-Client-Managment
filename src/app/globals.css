@@ -82,8 +82,8 @@
   --muted-foreground: #5b6b85;
   --accent: var(--brand-cyan-soft);
   --accent-foreground: #0b4f63;
-  --destructive: #d92d20;
-  --success: #12805c;
+  --destructive: #c0241a;
+  --success: #0e6b4c;
   --warning: #b54708;
   --info: var(--brand-cyan);
   --border: #dde3ec;

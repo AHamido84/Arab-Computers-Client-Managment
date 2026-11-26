@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
@@ -27,7 +28,12 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
         <Input id="email" name="email" type="email" autoComplete="email" dir="ltr" required value={email} onChange={(e) => setEmail(e.target.value)} />
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="password">{t("password")}</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="password">{t("password")}</Label>
+          <Link href="/forgot-password" className="text-xs text-primary hover:underline">
+            {t("forgot")}
+          </Link>
+        </div>
         <Input id="password" name="password" type="password" autoComplete="current-password" dir="ltr" required />
       </div>
       <Button type="submit" disabled={pending} className="w-full">

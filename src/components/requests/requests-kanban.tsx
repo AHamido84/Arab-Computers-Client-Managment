@@ -139,7 +139,7 @@ export function RequestsKanban({ rows, users, canWrite }: { rows: RequestRow[]; 
 
 function KanbanCard({ r, canWrite, onMove }: { r: RequestRow; canWrite: boolean; onMove: (id: string, s: RequestStatus) => void }) {
   const t = useTranslations();
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: r.id, disabled: !canWrite });
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: r.id, disabled: !canWrite, attributes: { role: "group", roleDescription: t("requests.draggableCard") } });
   return (
     <div ref={setNodeRef} {...attributes} {...listeners} className={cn("touch-manipulation", isDragging && "opacity-30")}>
       <CardBody

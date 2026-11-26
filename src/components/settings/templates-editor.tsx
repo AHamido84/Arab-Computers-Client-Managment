@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { FormField } from "@/components/forms/form-field";
 import { useServerAction } from "@/components/forms/use-action";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -40,34 +40,34 @@ export function TemplatesEditor({ templates }: { templates: TemplateEntry[] }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
-        <Tabs
+        <Segmented
+          label={t("settings.templates")}
           value={type}
-          onValueChange={(v) => {
+          options={[
+            { value: "document", label: t("settings.templatesDocuments") },
+            { value: "email", label: t("settings.templatesEmails") },
+          ]}
+          onChange={(v) => {
             const nt = v as "document" | "email";
             setType(nt);
             setKind(templates.find((x) => x.type === nt)!.kind);
           }}
-        >
-          <TabsList>
-            <TabsTrigger value="document">{t("settings.templatesDocuments")}</TabsTrigger>
-            <TabsTrigger value="email">{t("settings.templatesEmails")}</TabsTrigger>
-          </TabsList>
-        </Tabs>
-        <Tabs value={kind} onValueChange={setKind}>
-          <TabsList>
-            {kinds.map((k) => (
-              <TabsTrigger key={k} value={k}>
-                {t(`settings.${type === "email" && (k === "QUOTATION" || k === "CONTRACT") ? `tpl_EMAIL_${k}` : `tpl_${k}`}`)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-        <Tabs value={lang} onValueChange={(v) => setLang(v as Lang)}>
-          <TabsList>
-            <TabsTrigger value="ar">{t("languages.ar")}</TabsTrigger>
-            <TabsTrigger value="en">{t("languages.en")}</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        />
+        <Segmented
+          label={t("settings.templateTitle")}
+          value={kind}
+          options={kinds.map((k) => ({ value: k, label: t(`settings.${type === "email" && (k === "QUOTATION" || k === "CONTRACT") ? `tpl_EMAIL_${k}` : `tpl_${k}`}`) }))}
+          onChange={setKind}
+        />
+        <Segmented
+          label={t("email.language")}
+          value={lang}
+          options={[
+            { value: "ar", label: t("languages.ar") },
+            { value: "en", label: t("languages.en") },
+          ]}
+          onChange={(v) => setLang(v as Lang)}
+        />
       </div>
       {/* key: reset editor state when switching template */}
       <Editor key={`${current.type}-${current.kind}-${current.lang}`} entry={current} />
@@ -176,6 +176,27 @@ function Editor({ entry }: { entry: TemplateEntry }) {
           <div className="whitespace-pre-wrap rounded-lg border bg-muted/30 p-4 text-sm leading-relaxed">{fillPlaceholders(body, vars)}</div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+/** Toggle-button group (aria-pressed) — used where there are no tab panels. */
+function Segmented({ label, value, options, onChange }: { label: string; value: string; options: { value: string; label: string }[]; onChange: (v: string) => void }) {
+  return (
+    <div role="group" aria-label={label} className="inline-flex flex-wrap rounded-lg bg-muted p-0.5">
+      {options.map((o) => (
+        <Button
+          key={o.value}
+          type="button"
+          size="sm"
+          variant={o.value === value ? "secondary" : "ghost"}
+          aria-pressed={o.value === value}
+          className={o.value === value ? "bg-background shadow-sm" : "text-muted-foreground"}
+          onClick={() => onChange(o.value)}
+        >
+          {o.label}
+        </Button>
+      ))}
     </div>
   );
 }

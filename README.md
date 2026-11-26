@@ -57,7 +57,7 @@ Open http://localhost:3000.
 | karim@arab-computers.com | `Manager@12345` | Account manager |
 | viewer@arab-computers.com | `Viewer@12345` | Viewer |
 
-> **Change these passwords (or delete the demo users) before going live.**
+> **Change these passwords (or delete the demo users) before going live.** See the go-live checklist below.
 
 ### Useful scripts
 
@@ -185,6 +185,61 @@ Implemented in `src/lib/amc/engine.ts` and covered by `tests/amc-engine.test.ts`
   - Every send (or failure) is logged in *Sent emails* and on the client timeline, together with the exact PDF that was sent.
   - Choose the provider in *Settings → Notifications & email*, and use *Send test email* to verify it.
   - Local development without credentials: set `EMAIL_DEV_OUTBOX=1` and emails are written to `.uploads/outbox/` instead of being sent. In production, a missing provider shows an error instead of silently dropping mail.
+
+### Users, security & audit
+
+- **Users & roles** (*Settings → Users & roles*): create users, change their role or language, disable accounts, and set passwords.
+  - The app always keeps at least one active admin, and admins can't demote or disable themselves.
+- **Passwords:** at least 10 characters with letters and numbers, hashed with bcrypt (cost 12).
+  - Every user can change their own password from the user menu.
+  - *Forgot password* emails a one-hour, single-use link. It never reveals whether an address exists and is throttled per user.
+  - Requires `APP_URL` and a working email provider.
+- **Authorization** is enforced on the server in every action and route (`src/server/auth-guard.ts`); the UI only hides what a role can't do.
+  - Files, PDFs, reports and email attachments are served only to signed-in users.
+- **Security headers:** `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy` and HSTS, set in `next.config.ts`.
+- **Audit log** (*Settings → Audit log*): every create/update/delete with who, when and the changed fields. Password hashes are never recorded.
+
+### Accessibility
+
+- Checked with axe-core (WCAG 2.1 A/AA) on 22 pages in English/light and Arabic/dark: **0 violations**.
+- Includes a skip-to-content link, labelled form controls (FormField shares its label with the Select/Input/Textarea inside it), keyboard-operable Kanban (Space to pick up, arrows to move), and a screen-reader table behind the dashboard chart.
+- Chart colors are validated for color-vision deficiency.
+
+### Testing
+
+```bash
+npm test
+```
+
+Runs Vitest on the AMC engine, notification scheduling, totals/VAT, quotation workflow, placeholder filling, and translation parity and ICU validity for every message.
+
+```bash
+npm run lint && npm run typecheck && npm run build
+```
+
+Runs static checks and the production build.
+
+### Go-live checklist
+
+1. Neon and Blob are connected, and `AUTH_SECRET`, `CRON_SECRET` and `APP_URL` are set on Vercel (Production and Preview).
+2. An email provider is set:
+   - Resend: `RESEND_API_KEY` with the sending domain verified;
+   - or SMTP: `SMTP_*` variables, then choose SMTP in *Settings → Notifications & email*.
+   - Click **Send test email**.
+3. `EMAIL_DEV_OUTBOX` is **not** set on Vercel.
+4. Deploy, then run the seed once with a strong `SEED_ADMIN_PASSWORD`.
+5. Sign in as admin, then:
+   - set company info, logo and footers;
+   - review the document and email templates;
+   - set the reminder intervals.
+6. Create real users. **Disable or delete the demo users** (manager, karim, viewer) and delete the demo clients if you don't want them.
+7. Check the cron job under *Vercel → Project → Cron Jobs* (or click *Run daily check now*).
+
+### Known limitations
+
+- Attachments are capped at 4 MB per file (Vercel request body limit). Larger scans would need direct-to-Blob client uploads.
+- Amounts are totalled in the default currency; contracts in other currencies are listed but not converted.
+- There's no login rate limiting beyond Auth.js defaults. If needed, add Vercel Firewall rate limiting on `/api/auth/callback/credentials`.
 
 ### Notes
 

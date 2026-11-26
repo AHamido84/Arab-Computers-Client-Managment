@@ -1,5 +1,7 @@
 "use client";
 
+import { useId } from "react";
+import { FieldLabelContext } from "./field-context";
 import { useTranslations } from "next-intl";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -23,20 +25,24 @@ export function FormField({
   children: React.ReactNode;
 }) {
   const t = useTranslations();
+  const labelId = useId();
+  const msgId = useId();
   return (
+    <FieldLabelContext.Provider value={htmlFor ? null : { labelId, describedBy: error || hint ? msgId : undefined }}>
     <div className={cn("grid gap-1.5", className)}>
-      <Label htmlFor={htmlFor} className={cn(error && "text-destructive")}>
+      <Label id={labelId} htmlFor={htmlFor} className={cn(error && "text-destructive")}>
         {label}
         {required && <span className="text-destructive">*</span>}
       </Label>
       {children}
       {error ? (
-        <p className="text-xs text-destructive" role="alert">
+        <p id={msgId} className="text-xs text-destructive" role="alert">
           {t.has(error) ? t(error) : error}
         </p>
       ) : hint ? (
-        <p className="text-xs text-muted-foreground">{hint}</p>
+        <p id={msgId} className="text-xs text-muted-foreground">{hint}</p>
       ) : null}
     </div>
+    </FieldLabelContext.Provider>
   );
 }

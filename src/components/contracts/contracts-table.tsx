@@ -79,7 +79,7 @@ export function ContractsTable({ rows, products }: { rows: ContractRow[]; produc
           return (
             <div className={r.nextAmcOverdue ? "text-destructive" : ""}>
               <div className="font-medium">{f.date(r.nextAmcDue)}</div>
-              <div className="num text-xs opacity-80">{f.money(r.nextAmcAmount, r.currency)}</div>
+              <div className="num text-xs">{f.money(r.nextAmcAmount, r.currency)}</div>
             </div>
           );
         },

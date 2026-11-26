@@ -92,7 +92,7 @@ export function QuotationsTable({ rows, clients }: { rows: QuotationRow[]; clien
       columns={columns}
       exportName="quotations"
       rowHref={(r) => `/quotations/${r.id}`}
-      rowClassName={(r) => (r.isLatest ? undefined : "opacity-70")}
+      rowClassName={(r) => (r.isLatest ? undefined : "bg-muted/40")}
       searchText={(r) => [r.number, r.title, r.client.nameAr, r.client.nameEn].join(" ")}
       filters={[
         { columnId: "status", label: t("quotations.status"), options: QUOTATION_STATUSES.map((s) => ({ value: s, label: t(`quotationStatus.${s}`) })) },

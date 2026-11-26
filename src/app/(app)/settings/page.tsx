@@ -15,10 +15,10 @@ export default async function SettingsPage() {
   const items = [
     { href: "/settings/lists", icon: ListChecks, title: t("lists"), desc: t("listsDesc"), ready: true },
     { href: "/settings/company", icon: Building, title: t("company"), desc: t("companyDesc"), ready: true },
-    { href: "/settings/users", icon: Users, title: t("users"), desc: t("usersDesc"), ready: false },
+    { href: "/settings/users", icon: Users, title: t("users"), desc: t("usersDesc"), ready: true },
     { href: "/settings/templates", icon: FileCode2, title: t("templates"), desc: t("templatesDesc"), ready: true },
     { href: "/settings/notifications", icon: Bell, title: t("notificationsTitle"), desc: t("notificationsDesc"), ready: true },
-    { href: "/settings/audit", icon: ScrollText, title: t("audit"), desc: t("auditDesc"), ready: false },
+    { href: "/settings/audit", icon: ScrollText, title: t("audit"), desc: t("auditDesc"), ready: true },
   ];
   return (
     <>

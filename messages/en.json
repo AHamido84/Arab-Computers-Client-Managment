@@ -110,7 +110,8 @@
     "select": "Select…",
     "clear": "Clear",
     "saveChanges": "Save changes",
-    "system": "System"
+    "system": "System",
+    "skipToContent": "Skip to content"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -530,7 +531,8 @@
     "changeStatus": "Change status",
     "dragHint": "Drag cards between columns to change their status.",
     "onlyOpen": "Open only",
-    "overdueOnly": "Overdue only"
+    "overdueOnly": "Overdue only",
+    "draggableCard": "Request card"
   },
   "quotations": {
     "title": "Quotations",
@@ -758,5 +760,63 @@
     "currencyNote": "Totals are in {currency}; other currencies are listed separately.",
     "acceptanceRate": "Acceptance rate",
     "empty": "No data for the selected filters."
+  },
+  "users": {
+    "title": "Users & roles",
+    "new": "New user",
+    "edit": "Edit user",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "language": "Language",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Disabled",
+    "lastLogin": "Last sign-in",
+    "never": "Never",
+    "password": "Password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "currentPassword": "Current password",
+    "setPassword": "Set password",
+    "setPasswordTitle": "Set a new password for {name}",
+    "passwordRule": "At least 10 characters, including letters and numbers.",
+    "passwordMismatch": "Passwords do not match.",
+    "currentWrong": "Current password is incorrect.",
+    "passwordChanged": "Password changed",
+    "changePassword": "Change password",
+    "created": "User created",
+    "updated": "User updated",
+    "cannotDemoteSelf": "You can't remove your own admin role or disable your own account.",
+    "lastAdmin": "There must be at least one active admin.",
+    "rolesHelp": "Admin: everything. Account manager: manage clients, contracts, requests, quotations and send emails. Viewer: read-only.",
+    "forgotTitle": "Reset your password",
+    "forgotHint": "Enter your email and we'll send you a reset link.",
+    "sendLink": "Send reset link",
+    "linkSent": "If an account exists for this email, a reset link has been sent. It is valid for one hour.",
+    "resetTitle": "Choose a new password",
+    "resetDone": "Your password has been reset. You can sign in now.",
+    "resetInvalid": "This reset link is invalid or has expired. Request a new one.",
+    "backToLogin": "Back to sign in",
+    "resetEmailSubject": "Password reset",
+    "resetEmailBody": "Hello {name},\n\nUse this link to choose a new password (valid for one hour):\n{link}\n\nIf you didn't request this, you can ignore this email.",
+    "you": "You"
+  },
+  "audit": {
+    "title": "Audit log",
+    "date": "Date",
+    "user": "User",
+    "action": "Action",
+    "entity": "Record",
+    "changes": "Changes",
+    "CREATE": "Created",
+    "UPDATE": "Updated",
+    "DELETE": "Deleted",
+    "system": "System",
+    "showChanges": "Show changes",
+    "field": "Field",
+    "from": "Before",
+    "to": "After",
+    "limitNote": "Showing the latest {count} entries."
   }
 }

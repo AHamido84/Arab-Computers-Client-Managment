@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { getTranslations } from "next-intl/server";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { LanguageToggle } from "@/components/layout/language-toggle";
@@ -12,6 +13,7 @@ import { FormatProvider } from "@/components/shared/format-provider";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
+  const t = await getTranslations();
   const [store, settings, unread] = await Promise.all([
     cookies(),
     getSettings(),
@@ -21,6 +23,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
+      <a href="#main-content" className="sr-only z-50 rounded-md bg-primary px-3 py-2 text-primary-foreground focus:not-sr-only focus:fixed focus:start-3 focus:top-3">
+        {t("common.skipToContent")}
+      </a>
       <AppSidebar isAdmin={user.role === "ADMIN"} unread={unread} />
       <SidebarInset className="min-w-0">
         <header className="no-print sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/85 px-4 backdrop-blur">
@@ -31,7 +36,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <NotificationBell userId={user.id} unread={unread} canEmail={can(user.role, "sendEmail")} />
           <UserMenu name={user.name ?? ""} email={user.email ?? ""} role={user.role} />
         </header>
-        <div className="flex-1 p-4 md:p-6">
+        <div id="main-content" tabIndex={-1} className="flex-1 p-4 outline-none md:p-6">
           <FormatProvider digits={settings.arabicDigits} currency={settings.defaultCurrency}>
             {children}
           </FormatProvider>

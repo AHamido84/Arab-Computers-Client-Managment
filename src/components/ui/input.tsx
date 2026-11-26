@@ -1,9 +1,12 @@
 import * as React from "react"
 import { cn } from "cn"
+import { useFieldA11y } from "@/components/forms/field-context"
 
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  const a11y = useFieldA11y(props)
   return (
     <input
+      {...a11y}
       type={type}
       data-slot="input"
       className={cn(

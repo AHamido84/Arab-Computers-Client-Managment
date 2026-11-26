@@ -25,7 +25,7 @@ export function AmcChart({ data, currency }: { data: Row[]; currency: string }) 
     <div>
       <div className="h-72" dir="ltr" aria-hidden>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={rows} margin={{ top: 8, right: 8, left: 8, bottom: 0 }} barCategoryGap="28%">
+          <BarChart accessibilityLayer={false} data={rows} margin={{ top: 8, right: 8, left: 8, bottom: 0 }} barCategoryGap="28%">
             <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="0" />
             <XAxis dataKey="label" reversed={rtl} tickLine={false} axisLine={{ stroke: "var(--border)" }} tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
             <YAxis

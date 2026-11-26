@@ -73,14 +73,14 @@ export function AppSidebar({ isAdmin, unread }: { isAdmin: boolean; unread: numb
           </span>
           <span className="grid leading-tight group-data-[collapsible=icon]:hidden">
             <span className="truncate font-semibold text-white">{tApp("name")}</span>
-            <span className="truncate text-xs text-sidebar-foreground/70">{tApp("product")}</span>
+            <span className="truncate text-xs text-sidebar-foreground/85">{tApp("product")}</span>
           </span>
         </Link>
       </SidebarHeader>
       <SidebarContent>
         {groups.map((g) => (
           <SidebarGroup key={g.label}>
-            <SidebarGroupLabel className="text-sidebar-foreground/60">{g.label}</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-sidebar-foreground/85">{g.label}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {g.items.map((item) => {
@@ -106,7 +106,7 @@ export function AppSidebar({ isAdmin, unread }: { isAdmin: boolean; unread: numb
           </SidebarGroup>
         ))}
       </SidebarContent>
-      <SidebarFooter className="text-xs text-sidebar-foreground/50 group-data-[collapsible=icon]:hidden">
+      <SidebarFooter className="text-xs text-sidebar-foreground/80 group-data-[collapsible=icon]:hidden">
         arab-computers.com
       </SidebarFooter>
       <SidebarRail />
